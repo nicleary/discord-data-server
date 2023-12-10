@@ -1,6 +1,8 @@
 package messages
 
 import (
+	"context"
+	"discord-metrics-server/v2/db"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -21,6 +23,13 @@ func UploadMessage(c *gin.Context) {
 		return
 	}
 	fmt.Println("Message", message.Contents)
+	client := db.GetClient()
+	_, err := client.Message.Create().SetContents("ur mom").Save(context.Background())
+
+	if err != nil {
+		fmt.Println("error creating message object!")
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
 
