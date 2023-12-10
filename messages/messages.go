@@ -22,7 +22,6 @@ func UploadMessage(c *gin.Context) {
 	}
 	fmt.Println("Message", message.Contents)
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
-	return
 }
 
 func Routes(router *gin.Engine) {
