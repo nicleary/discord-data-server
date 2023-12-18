@@ -21,6 +21,27 @@ services:
         - POSTGRES_DB=discorddata
       ports:
         - "5432:5432"
+  atlas_make_migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile.make_migrations
+    environment:
+      - MIGRATION_NAME=$MIGRATION_NAME
+    volumes:
+      - ./ent/migrate:/app/ent/migrate
+      - ./ent/schema:/app/ent/schema
+    command:
+      - "migrate"
+      - "diff"
+      - "$MIGRATION_NAME"
+      - "--dir"
+      - "file://ent/migrate/migrations"
+      - "--to"
+      - "ent://ent/schema"
+      - "--dev-url"
+      - "postgresql://postgres:postgres@postgres:5432/discorddata?sslmode=disable&search_path=public"
+    depends_on:
+      - postgres
 
 volumes:
   postgres_data:

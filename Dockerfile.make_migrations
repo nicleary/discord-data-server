@@ -1,0 +1,10 @@
+FROM harbor.nicleary.com/dockerhub/golang:1.21
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+RUN curl -sSf https://atlasgo.sh | sh
+
+ENTRYPOINT ["atlas"]
