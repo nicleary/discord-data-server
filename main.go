@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"discord-metrics-server/v2/db"
 	"discord-metrics-server/v2/messages"
 	"fmt"
@@ -22,11 +21,6 @@ func main() {
 	client := db.GetClient()
 	defer client.Close()
 
-	// Run the auto migration tool.
-	if err := client.Schema.Create(context.Background()); err != nil {
-		log.Fatalf("failed creating schema resources: %v", err)
-	}
-
 	fmt.Println("Starting server")
 
 	r := gin.Default()
@@ -38,5 +32,5 @@ func main() {
 
 	fmt.Println("Activating routes")
 	messages.Routes(r)
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	r.Run()
 }
