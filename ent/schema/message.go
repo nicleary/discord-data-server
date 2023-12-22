@@ -15,10 +15,8 @@ type Message struct {
 func (Message) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("contents").Annotations(entsql.Annotation{
-			Size: 10,
-		}).Optional(),
-		field.String("something"),
-		field.String("something else"),
+			Size: 8192,
+		}),
 	}
 }
 

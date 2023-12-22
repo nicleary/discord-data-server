@@ -3,20 +3,25 @@ package db
 import (
 	"discord-metrics-server/v2/ent"
 	"fmt"
-	_ "github.com/lib/pq"
+	_ "github.com/go-sql-driver/mysql"
+	"log"
 	"os"
 )
 
 var entClient *ent.Client
 
 func CreateClient() error {
-	dataSourceString := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		os.Getenv("POSTGRES_HOST"),
-		os.Getenv("POSTGRES_PORT"),
-		os.Getenv("POSTGRES_USER"),
-		os.Getenv("POSTGRES_DB"),
-		os.Getenv("POSTGRES_PASSWORD"))
-	client, err := ent.Open("postgres", dataSourceString)
+	dataSourceString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=True",
+		os.Getenv("MARIA_USER"),
+		os.Getenv("MARIA_PASSWORD"),
+		os.Getenv("MARIA_HOST"),
+		os.Getenv("MARIA_PORT"),
+		os.Getenv("MARIA_DB"))
+	fmt.Println(dataSourceString)
+	client, err := ent.Open("mysql", dataSourceString)
+	if err != nil {
+		log.Fatalf("Error opening mariadb connection!")
+	}
 	entClient = client
 	return err
 }

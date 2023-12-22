@@ -1,2 +1,8 @@
 .gitignore
 README.md
+.env
+docker-compose.yaml
+Dockerfile
+Dockerfile.migrations
+make_migrations.sh
+.dockerignore

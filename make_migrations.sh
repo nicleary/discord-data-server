@@ -2,6 +2,9 @@ if [ -z "$1" ]; then
   echo "Must provide migration name";
   exit 1
 else
-  export MIGRATION_NAME=$1 && docker compose up atlas_make_migrations --build;
+  docker compose --profile run down
+  docker volume rm discord-data-server_mariadb_data
+  docker compose up db -d
+  sleep 3
+  atlas migrate diff "$1" --dir file://ent/migrate/migrations --to ent://ent/schema --dev-url mysql://mysql:mysql@localhost:3306/discorddata
 fi
-

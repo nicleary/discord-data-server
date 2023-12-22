@@ -28,6 +28,7 @@ func UploadMessage(c *gin.Context) {
 
 	if err != nil {
 		fmt.Println("error creating message object!")
+		fmt.Println(err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})

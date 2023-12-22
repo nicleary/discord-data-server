@@ -9,47 +9,8 @@ services:
     ports:
       - 8080:8080
     depends_on:
-      - postgres
-    profiles:
-      - run
-  postgres:
-    image: harbor.nicleary.com/dockerhub/postgres:15-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=discorddata
-    ports:
-      - "5432:5432"
-    profiles:
-      - make_migrations
-      - run
-  atlas_make_migrations:
-    build:
-      context: .
-      dockerfile: Dockerfile.migrations
-    environment:
-      - MIGRATION_NAME=$MIGRATION_NAME
-    volumes:
-      - ./ent/migrate:/app/ent/migrate
-      - ./ent/schema:/app/ent/schema
-    command:
-      - "migrate"
-      - "diff"
-      - "$MIGRATION_NAME"
-      - "--dir"
-      - "file://ent/migrate/migrations"
-      - "--to"
-      - "ent://ent/schema"
-      - "--dev-url"
-      - "mysql://mysql:mysql@db:3306/discorddata"
-    depends_on:
-      - postgres
-      - db
-    profiles:
-      - make_migrations
+      atlas_run_migrations:
+        condition: service_completed_successfully
   atlas_run_migrations:
     build:
       context: .
@@ -57,32 +18,37 @@ services:
     volumes:
       - ./ent/migrate:/app/ent/migrate
       - ./ent/schema:/app/ent/schema
-    command:
+    entrypoint:
+      - "atlas"
       - "migrate"
       - "apply"
       - "--dir"
       - "file://ent/migrate/migrations"
       - "--url"
-      - "postgresql://postgres:postgres@postgres:5432/discorddata?sslmode=disable&search_path=public"
+      - "mysql://mysql:mysql@db:3306/discorddata"
     depends_on:
-      - postgres
-    profiles:
-      - run
+      db:
+        condition: service_healthy
   db:
-    image: mysql
-    # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
-    # (this is just an example, not intended to be a production configuration)
-    command: --default-authentication-plugin=mysql_native_password
+    image: harbor.nicleary.com/dockerhub/mariadb
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: example
+      MARIADB_RANDOM_ROOT_PASSWORD: true
       MYSQL_DATABASE: discorddata
       MYSQL_USER: mysql
       MYSQL_PASSWORD: mysql
-    profiles:
-      - make_migrations
-      - run
+      MARIADB_MYSQL_LOCALHOST_USER: 1
+      MARIADB_MYSQL_LOCALHOST_GRANTS: USAGE
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    ports:
+      - 3306:3306
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized" ]
+      interval: 1s
+      timeout: 2s
+      retries: 3
 
 
 volumes:
-  postgres_data:
+  mariadb_data:
