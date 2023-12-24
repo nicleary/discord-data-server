@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -17,10 +18,14 @@ func (Message) Fields() []ent.Field {
 		field.String("contents").Annotations(entsql.Annotation{
 			Size: 8192,
 		}),
+		field.Time("sent_at"),
+		field.Int("sender_id"),
 	}
 }
 
 // Edges of the Message.
 func (Message) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.From("sender", User.Type).Ref("messages").Unique().Field("sender_id").Required(),
+	}
 }

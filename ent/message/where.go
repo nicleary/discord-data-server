@@ -4,8 +4,10 @@ package message
 
 import (
 	"discord-metrics-server/v2/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -56,6 +58,16 @@ func IDLTE(id int) predicate.Message {
 // Contents applies equality check predicate on the "contents" field. It's identical to ContentsEQ.
 func Contents(v string) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldContents, v))
+}
+
+// SentAt applies equality check predicate on the "sent_at" field. It's identical to SentAtEQ.
+func SentAt(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldSentAt, v))
+}
+
+// SenderID applies equality check predicate on the "sender_id" field. It's identical to SenderIDEQ.
+func SenderID(v int) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldSenderID, v))
 }
 
 // ContentsEQ applies the EQ predicate on the "contents" field.
@@ -121,6 +133,89 @@ func ContentsEqualFold(v string) predicate.Message {
 // ContentsContainsFold applies the ContainsFold predicate on the "contents" field.
 func ContentsContainsFold(v string) predicate.Message {
 	return predicate.Message(sql.FieldContainsFold(FieldContents, v))
+}
+
+// SentAtEQ applies the EQ predicate on the "sent_at" field.
+func SentAtEQ(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldSentAt, v))
+}
+
+// SentAtNEQ applies the NEQ predicate on the "sent_at" field.
+func SentAtNEQ(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldNEQ(FieldSentAt, v))
+}
+
+// SentAtIn applies the In predicate on the "sent_at" field.
+func SentAtIn(vs ...time.Time) predicate.Message {
+	return predicate.Message(sql.FieldIn(FieldSentAt, vs...))
+}
+
+// SentAtNotIn applies the NotIn predicate on the "sent_at" field.
+func SentAtNotIn(vs ...time.Time) predicate.Message {
+	return predicate.Message(sql.FieldNotIn(FieldSentAt, vs...))
+}
+
+// SentAtGT applies the GT predicate on the "sent_at" field.
+func SentAtGT(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldGT(FieldSentAt, v))
+}
+
+// SentAtGTE applies the GTE predicate on the "sent_at" field.
+func SentAtGTE(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldGTE(FieldSentAt, v))
+}
+
+// SentAtLT applies the LT predicate on the "sent_at" field.
+func SentAtLT(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldLT(FieldSentAt, v))
+}
+
+// SentAtLTE applies the LTE predicate on the "sent_at" field.
+func SentAtLTE(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldLTE(FieldSentAt, v))
+}
+
+// SenderIDEQ applies the EQ predicate on the "sender_id" field.
+func SenderIDEQ(v int) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldSenderID, v))
+}
+
+// SenderIDNEQ applies the NEQ predicate on the "sender_id" field.
+func SenderIDNEQ(v int) predicate.Message {
+	return predicate.Message(sql.FieldNEQ(FieldSenderID, v))
+}
+
+// SenderIDIn applies the In predicate on the "sender_id" field.
+func SenderIDIn(vs ...int) predicate.Message {
+	return predicate.Message(sql.FieldIn(FieldSenderID, vs...))
+}
+
+// SenderIDNotIn applies the NotIn predicate on the "sender_id" field.
+func SenderIDNotIn(vs ...int) predicate.Message {
+	return predicate.Message(sql.FieldNotIn(FieldSenderID, vs...))
+}
+
+// HasSender applies the HasEdge predicate on the "sender" edge.
+func HasSender() predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, SenderTable, SenderColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSenderWith applies the HasEdge predicate on the "sender" edge with a given conditions (other predicates).
+func HasSenderWith(preds ...predicate.User) predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := newSenderStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

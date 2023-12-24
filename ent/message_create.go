@@ -5,8 +5,10 @@ package ent
 import (
 	"context"
 	"discord-metrics-server/v2/ent/message"
+	"discord-metrics-server/v2/ent/user"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -23,6 +25,23 @@ type MessageCreate struct {
 func (mc *MessageCreate) SetContents(s string) *MessageCreate {
 	mc.mutation.SetContents(s)
 	return mc
+}
+
+// SetSentAt sets the "sent_at" field.
+func (mc *MessageCreate) SetSentAt(t time.Time) *MessageCreate {
+	mc.mutation.SetSentAt(t)
+	return mc
+}
+
+// SetSenderID sets the "sender_id" field.
+func (mc *MessageCreate) SetSenderID(i int) *MessageCreate {
+	mc.mutation.SetSenderID(i)
+	return mc
+}
+
+// SetSender sets the "sender" edge to the User entity.
+func (mc *MessageCreate) SetSender(u *User) *MessageCreate {
+	return mc.SetSenderID(u.ID)
 }
 
 // Mutation returns the MessageMutation object of the builder.
@@ -62,6 +81,15 @@ func (mc *MessageCreate) check() error {
 	if _, ok := mc.mutation.Contents(); !ok {
 		return &ValidationError{Name: "contents", err: errors.New(`ent: missing required field "Message.contents"`)}
 	}
+	if _, ok := mc.mutation.SentAt(); !ok {
+		return &ValidationError{Name: "sent_at", err: errors.New(`ent: missing required field "Message.sent_at"`)}
+	}
+	if _, ok := mc.mutation.SenderID(); !ok {
+		return &ValidationError{Name: "sender_id", err: errors.New(`ent: missing required field "Message.sender_id"`)}
+	}
+	if _, ok := mc.mutation.SenderID(); !ok {
+		return &ValidationError{Name: "sender", err: errors.New(`ent: missing required edge "Message.sender"`)}
+	}
 	return nil
 }
 
@@ -91,6 +119,27 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 	if value, ok := mc.mutation.Contents(); ok {
 		_spec.SetField(message.FieldContents, field.TypeString, value)
 		_node.Contents = value
+	}
+	if value, ok := mc.mutation.SentAt(); ok {
+		_spec.SetField(message.FieldSentAt, field.TypeTime, value)
+		_node.SentAt = value
+	}
+	if nodes := mc.mutation.SenderIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.SenderTable,
+			Columns: []string{message.SenderColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.SenderID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

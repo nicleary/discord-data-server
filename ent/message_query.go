@@ -6,6 +6,7 @@ import (
 	"context"
 	"discord-metrics-server/v2/ent/message"
 	"discord-metrics-server/v2/ent/predicate"
+	"discord-metrics-server/v2/ent/user"
 	"fmt"
 	"math"
 
@@ -21,6 +22,7 @@ type MessageQuery struct {
 	order      []message.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Message
+	withSender *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -55,6 +57,28 @@ func (mq *MessageQuery) Unique(unique bool) *MessageQuery {
 func (mq *MessageQuery) Order(o ...message.OrderOption) *MessageQuery {
 	mq.order = append(mq.order, o...)
 	return mq
+}
+
+// QuerySender chains the current query on the "sender" edge.
+func (mq *MessageQuery) QuerySender() *UserQuery {
+	query := (&UserClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, message.SenderTable, message.SenderColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Message entity from the query.
@@ -249,10 +273,22 @@ func (mq *MessageQuery) Clone() *MessageQuery {
 		order:      append([]message.OrderOption{}, mq.order...),
 		inters:     append([]Interceptor{}, mq.inters...),
 		predicates: append([]predicate.Message{}, mq.predicates...),
+		withSender: mq.withSender.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
 	}
+}
+
+// WithSender tells the query-builder to eager-load the nodes that are connected to
+// the "sender" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MessageQuery) WithSender(opts ...func(*UserQuery)) *MessageQuery {
+	query := (&UserClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withSender = query
+	return mq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -331,8 +367,11 @@ func (mq *MessageQuery) prepareQuery(ctx context.Context) error {
 
 func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Message, error) {
 	var (
-		nodes = []*Message{}
-		_spec = mq.querySpec()
+		nodes       = []*Message{}
+		_spec       = mq.querySpec()
+		loadedTypes = [1]bool{
+			mq.withSender != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Message).scanValues(nil, columns)
@@ -340,6 +379,7 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Message{config: mq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -351,7 +391,43 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := mq.withSender; query != nil {
+		if err := mq.loadSender(ctx, query, nodes, nil,
+			func(n *Message, e *User) { n.Edges.Sender = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (mq *MessageQuery) loadSender(ctx context.Context, query *UserQuery, nodes []*Message, init func(*Message), assign func(*Message, *User)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Message)
+	for i := range nodes {
+		fk := nodes[i].SenderID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "sender_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (mq *MessageQuery) sqlCount(ctx context.Context) (int, error) {
@@ -378,6 +454,9 @@ func (mq *MessageQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != message.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if mq.withSender != nil {
+			_spec.Node.AddColumnOnce(message.FieldSenderID)
 		}
 	}
 	if ps := mq.predicates; len(ps) > 0 {

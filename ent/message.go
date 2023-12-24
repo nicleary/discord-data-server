@@ -4,8 +4,10 @@ package ent
 
 import (
 	"discord-metrics-server/v2/ent/message"
+	"discord-metrics-server/v2/ent/user"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -17,8 +19,37 @@ type Message struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Contents holds the value of the "contents" field.
-	Contents     string `json:"contents,omitempty"`
+	Contents string `json:"contents,omitempty"`
+	// SentAt holds the value of the "sent_at" field.
+	SentAt time.Time `json:"sent_at,omitempty"`
+	// SenderID holds the value of the "sender_id" field.
+	SenderID int `json:"sender_id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the MessageQuery when eager-loading is set.
+	Edges        MessageEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// MessageEdges holds the relations/edges for other nodes in the graph.
+type MessageEdges struct {
+	// Sender holds the value of the sender edge.
+	Sender *User `json:"sender,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// SenderOrErr returns the Sender value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MessageEdges) SenderOrErr() (*User, error) {
+	if e.loadedTypes[0] {
+		if e.Sender == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.Sender, nil
+	}
+	return nil, &NotLoadedError{edge: "sender"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -26,10 +57,12 @@ func (*Message) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case message.FieldID:
+		case message.FieldID, message.FieldSenderID:
 			values[i] = new(sql.NullInt64)
 		case message.FieldContents:
 			values[i] = new(sql.NullString)
+		case message.FieldSentAt:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -57,6 +90,18 @@ func (m *Message) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				m.Contents = value.String
 			}
+		case message.FieldSentAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field sent_at", values[i])
+			} else if value.Valid {
+				m.SentAt = value.Time
+			}
+		case message.FieldSenderID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field sender_id", values[i])
+			} else if value.Valid {
+				m.SenderID = int(value.Int64)
+			}
 		default:
 			m.selectValues.Set(columns[i], values[i])
 		}
@@ -68,6 +113,11 @@ func (m *Message) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (m *Message) Value(name string) (ent.Value, error) {
 	return m.selectValues.Get(name)
+}
+
+// QuerySender queries the "sender" edge of the Message entity.
+func (m *Message) QuerySender() *UserQuery {
+	return NewMessageClient(m.config).QuerySender(m)
 }
 
 // Update returns a builder for updating this Message.
@@ -95,6 +145,12 @@ func (m *Message) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", m.ID))
 	builder.WriteString("contents=")
 	builder.WriteString(m.Contents)
+	builder.WriteString(", ")
+	builder.WriteString("sent_at=")
+	builder.WriteString(m.SentAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("sender_id=")
+	builder.WriteString(fmt.Sprintf("%v", m.SenderID))
 	builder.WriteByte(')')
 	return builder.String()
 }

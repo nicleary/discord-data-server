@@ -6,8 +6,10 @@ import (
 	"context"
 	"discord-metrics-server/v2/ent/message"
 	"discord-metrics-server/v2/ent/predicate"
+	"discord-metrics-server/v2/ent/user"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -41,9 +43,48 @@ func (mu *MessageUpdate) SetNillableContents(s *string) *MessageUpdate {
 	return mu
 }
 
+// SetSentAt sets the "sent_at" field.
+func (mu *MessageUpdate) SetSentAt(t time.Time) *MessageUpdate {
+	mu.mutation.SetSentAt(t)
+	return mu
+}
+
+// SetNillableSentAt sets the "sent_at" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableSentAt(t *time.Time) *MessageUpdate {
+	if t != nil {
+		mu.SetSentAt(*t)
+	}
+	return mu
+}
+
+// SetSenderID sets the "sender_id" field.
+func (mu *MessageUpdate) SetSenderID(i int) *MessageUpdate {
+	mu.mutation.SetSenderID(i)
+	return mu
+}
+
+// SetNillableSenderID sets the "sender_id" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableSenderID(i *int) *MessageUpdate {
+	if i != nil {
+		mu.SetSenderID(*i)
+	}
+	return mu
+}
+
+// SetSender sets the "sender" edge to the User entity.
+func (mu *MessageUpdate) SetSender(u *User) *MessageUpdate {
+	return mu.SetSenderID(u.ID)
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (mu *MessageUpdate) Mutation() *MessageMutation {
 	return mu.mutation
+}
+
+// ClearSender clears the "sender" edge to the User entity.
+func (mu *MessageUpdate) ClearSender() *MessageUpdate {
+	mu.mutation.ClearSender()
+	return mu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -73,7 +114,18 @@ func (mu *MessageUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (mu *MessageUpdate) check() error {
+	if _, ok := mu.mutation.SenderID(); mu.mutation.SenderCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Message.sender"`)
+	}
+	return nil
+}
+
 func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := mu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(message.Table, message.Columns, sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt))
 	if ps := mu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -84,6 +136,38 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := mu.mutation.Contents(); ok {
 		_spec.SetField(message.FieldContents, field.TypeString, value)
+	}
+	if value, ok := mu.mutation.SentAt(); ok {
+		_spec.SetField(message.FieldSentAt, field.TypeTime, value)
+	}
+	if mu.mutation.SenderCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.SenderTable,
+			Columns: []string{message.SenderColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.SenderIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.SenderTable,
+			Columns: []string{message.SenderColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, mu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -119,9 +203,48 @@ func (muo *MessageUpdateOne) SetNillableContents(s *string) *MessageUpdateOne {
 	return muo
 }
 
+// SetSentAt sets the "sent_at" field.
+func (muo *MessageUpdateOne) SetSentAt(t time.Time) *MessageUpdateOne {
+	muo.mutation.SetSentAt(t)
+	return muo
+}
+
+// SetNillableSentAt sets the "sent_at" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableSentAt(t *time.Time) *MessageUpdateOne {
+	if t != nil {
+		muo.SetSentAt(*t)
+	}
+	return muo
+}
+
+// SetSenderID sets the "sender_id" field.
+func (muo *MessageUpdateOne) SetSenderID(i int) *MessageUpdateOne {
+	muo.mutation.SetSenderID(i)
+	return muo
+}
+
+// SetNillableSenderID sets the "sender_id" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableSenderID(i *int) *MessageUpdateOne {
+	if i != nil {
+		muo.SetSenderID(*i)
+	}
+	return muo
+}
+
+// SetSender sets the "sender" edge to the User entity.
+func (muo *MessageUpdateOne) SetSender(u *User) *MessageUpdateOne {
+	return muo.SetSenderID(u.ID)
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (muo *MessageUpdateOne) Mutation() *MessageMutation {
 	return muo.mutation
+}
+
+// ClearSender clears the "sender" edge to the User entity.
+func (muo *MessageUpdateOne) ClearSender() *MessageUpdateOne {
+	muo.mutation.ClearSender()
+	return muo
 }
 
 // Where appends a list predicates to the MessageUpdate builder.
@@ -164,7 +287,18 @@ func (muo *MessageUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (muo *MessageUpdateOne) check() error {
+	if _, ok := muo.mutation.SenderID(); muo.mutation.SenderCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Message.sender"`)
+	}
+	return nil
+}
+
 func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err error) {
+	if err := muo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(message.Table, message.Columns, sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt))
 	id, ok := muo.mutation.ID()
 	if !ok {
@@ -192,6 +326,38 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 	}
 	if value, ok := muo.mutation.Contents(); ok {
 		_spec.SetField(message.FieldContents, field.TypeString, value)
+	}
+	if value, ok := muo.mutation.SentAt(); ok {
+		_spec.SetField(message.FieldSentAt, field.TypeTime, value)
+	}
+	if muo.mutation.SenderCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.SenderTable,
+			Columns: []string{message.SenderColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.SenderIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.SenderTable,
+			Columns: []string{message.SenderColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Message{config: muo.config}
 	_spec.Assign = _node.assignValues

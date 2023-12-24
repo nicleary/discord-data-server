@@ -4,6 +4,7 @@ package message
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -13,14 +14,29 @@ const (
 	FieldID = "id"
 	// FieldContents holds the string denoting the contents field in the database.
 	FieldContents = "contents"
+	// FieldSentAt holds the string denoting the sent_at field in the database.
+	FieldSentAt = "sent_at"
+	// FieldSenderID holds the string denoting the sender_id field in the database.
+	FieldSenderID = "sender_id"
+	// EdgeSender holds the string denoting the sender edge name in mutations.
+	EdgeSender = "sender"
 	// Table holds the table name of the message in the database.
 	Table = "messages"
+	// SenderTable is the table that holds the sender relation/edge.
+	SenderTable = "messages"
+	// SenderInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	SenderInverseTable = "users"
+	// SenderColumn is the table column denoting the sender relation/edge.
+	SenderColumn = "sender_id"
 )
 
 // Columns holds all SQL columns for message fields.
 var Columns = []string{
 	FieldID,
 	FieldContents,
+	FieldSentAt,
+	FieldSenderID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -44,4 +60,28 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByContents orders the results by the contents field.
 func ByContents(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldContents, opts...).ToFunc()
+}
+
+// BySentAt orders the results by the sent_at field.
+func BySentAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSentAt, opts...).ToFunc()
+}
+
+// BySenderID orders the results by the sender_id field.
+func BySenderID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSenderID, opts...).ToFunc()
+}
+
+// BySenderField orders the results by sender field.
+func BySenderField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSenderStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newSenderStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SenderInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, SenderTable, SenderColumn),
+	)
 }

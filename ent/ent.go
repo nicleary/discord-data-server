@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"discord-metrics-server/v2/ent/message"
+	"discord-metrics-server/v2/ent/user"
 	"errors"
 	"fmt"
 	"reflect"
@@ -74,6 +75,7 @@ func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			message.Table: message.ValidColumn,
+			user.Table:    user.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)
