@@ -4,6 +4,7 @@ package user
 
 import (
 	"discord-metrics-server/v2/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -57,6 +58,11 @@ func IDLTE(id int) predicate.User {
 // UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
 func UserID(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldUserID, v))
+}
+
+// DateJoined applies equality check predicate on the "date_joined" field. It's identical to DateJoinedEQ.
+func DateJoined(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldDateJoined, v))
 }
 
 // UserIDEQ applies the EQ predicate on the "user_id" field.
@@ -122,6 +128,46 @@ func UserIDEqualFold(v string) predicate.User {
 // UserIDContainsFold applies the ContainsFold predicate on the "user_id" field.
 func UserIDContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldUserID, v))
+}
+
+// DateJoinedEQ applies the EQ predicate on the "date_joined" field.
+func DateJoinedEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldDateJoined, v))
+}
+
+// DateJoinedNEQ applies the NEQ predicate on the "date_joined" field.
+func DateJoinedNEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldDateJoined, v))
+}
+
+// DateJoinedIn applies the In predicate on the "date_joined" field.
+func DateJoinedIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldIn(FieldDateJoined, vs...))
+}
+
+// DateJoinedNotIn applies the NotIn predicate on the "date_joined" field.
+func DateJoinedNotIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldDateJoined, vs...))
+}
+
+// DateJoinedGT applies the GT predicate on the "date_joined" field.
+func DateJoinedGT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGT(FieldDateJoined, v))
+}
+
+// DateJoinedGTE applies the GTE predicate on the "date_joined" field.
+func DateJoinedGTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldDateJoined, v))
+}
+
+// DateJoinedLT applies the LT predicate on the "date_joined" field.
+func DateJoinedLT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLT(FieldDateJoined, v))
+}
+
+// DateJoinedLTE applies the LTE predicate on the "date_joined" field.
+func DateJoinedLTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldDateJoined, v))
 }
 
 // HasMessages applies the HasEdge predicate on the "messages" edge.

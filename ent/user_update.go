@@ -9,6 +9,7 @@ import (
 	"discord-metrics-server/v2/ent/user"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -38,6 +39,20 @@ func (uu *UserUpdate) SetUserID(s string) *UserUpdate {
 func (uu *UserUpdate) SetNillableUserID(s *string) *UserUpdate {
 	if s != nil {
 		uu.SetUserID(*s)
+	}
+	return uu
+}
+
+// SetDateJoined sets the "date_joined" field.
+func (uu *UserUpdate) SetDateJoined(t time.Time) *UserUpdate {
+	uu.mutation.SetDateJoined(t)
+	return uu
+}
+
+// SetNillableDateJoined sets the "date_joined" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableDateJoined(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetDateJoined(*t)
 	}
 	return uu
 }
@@ -122,6 +137,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.UserID(); ok {
 		_spec.SetField(user.FieldUserID, field.TypeString, value)
 	}
+	if value, ok := uu.mutation.DateJoined(); ok {
+		_spec.SetField(user.FieldDateJoined, field.TypeTime, value)
+	}
 	if uu.mutation.MessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -197,6 +215,20 @@ func (uuo *UserUpdateOne) SetUserID(s string) *UserUpdateOne {
 func (uuo *UserUpdateOne) SetNillableUserID(s *string) *UserUpdateOne {
 	if s != nil {
 		uuo.SetUserID(*s)
+	}
+	return uuo
+}
+
+// SetDateJoined sets the "date_joined" field.
+func (uuo *UserUpdateOne) SetDateJoined(t time.Time) *UserUpdateOne {
+	uuo.mutation.SetDateJoined(t)
+	return uuo
+}
+
+// SetNillableDateJoined sets the "date_joined" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableDateJoined(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetDateJoined(*t)
 	}
 	return uuo
 }
@@ -310,6 +342,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.UserID(); ok {
 		_spec.SetField(user.FieldUserID, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.DateJoined(); ok {
+		_spec.SetField(user.FieldDateJoined, field.TypeTime, value)
 	}
 	if uuo.mutation.MessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -3,6 +3,7 @@ package main
 import (
 	"discord-metrics-server/v2/db"
 	"discord-metrics-server/v2/messages"
+	"discord-metrics-server/v2/users"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/semihalev/gin-stats"
@@ -32,5 +33,6 @@ func main() {
 
 	fmt.Println("Activating routes")
 	messages.Routes(r)
+	users.Routes(r)
 	r.Run()
 }

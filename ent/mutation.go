@@ -527,6 +527,7 @@ type UserMutation struct {
 	typ             string
 	id              *int
 	user_id         *string
+	date_joined     *time.Time
 	clearedFields   map[string]struct{}
 	messages        map[int]struct{}
 	removedmessages map[int]struct{}
@@ -670,6 +671,42 @@ func (m *UserMutation) ResetUserID() {
 	m.user_id = nil
 }
 
+// SetDateJoined sets the "date_joined" field.
+func (m *UserMutation) SetDateJoined(t time.Time) {
+	m.date_joined = &t
+}
+
+// DateJoined returns the value of the "date_joined" field in the mutation.
+func (m *UserMutation) DateJoined() (r time.Time, exists bool) {
+	v := m.date_joined
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDateJoined returns the old "date_joined" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldDateJoined(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDateJoined is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDateJoined requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDateJoined: %w", err)
+	}
+	return oldValue.DateJoined, nil
+}
+
+// ResetDateJoined resets all changes to the "date_joined" field.
+func (m *UserMutation) ResetDateJoined() {
+	m.date_joined = nil
+}
+
 // AddMessageIDs adds the "messages" edge to the Message entity by ids.
 func (m *UserMutation) AddMessageIDs(ids ...int) {
 	if m.messages == nil {
@@ -758,9 +795,12 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 2)
 	if m.user_id != nil {
 		fields = append(fields, user.FieldUserID)
+	}
+	if m.date_joined != nil {
+		fields = append(fields, user.FieldDateJoined)
 	}
 	return fields
 }
@@ -772,6 +812,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case user.FieldUserID:
 		return m.UserID()
+	case user.FieldDateJoined:
+		return m.DateJoined()
 	}
 	return nil, false
 }
@@ -783,6 +825,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 	switch name {
 	case user.FieldUserID:
 		return m.OldUserID(ctx)
+	case user.FieldDateJoined:
+		return m.OldDateJoined(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -798,6 +842,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUserID(v)
+		return nil
+	case user.FieldDateJoined:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDateJoined(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -850,6 +901,9 @@ func (m *UserMutation) ResetField(name string) error {
 	switch name {
 	case user.FieldUserID:
 		m.ResetUserID()
+		return nil
+	case user.FieldDateJoined:
+		m.ResetDateJoined()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

@@ -28,17 +28,37 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "message_sent_at",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[2]},
+			},
+			{
+				Name:    "message_sender_id",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[3]},
+			},
+		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "user_id", Type: field.TypeString, Size: 64},
+		{Name: "user_id", Type: field.TypeString, Unique: true, Size: 64},
+		{Name: "date_joined", Type: field.TypeTime},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
 		Name:       "users",
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "user_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{UsersColumns[1]},
+			},
+		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{

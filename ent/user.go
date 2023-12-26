@@ -6,6 +6,7 @@ import (
 	"discord-metrics-server/v2/ent/user"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -18,6 +19,8 @@ type User struct {
 	ID int `json:"id,omitempty"`
 	// UserID holds the value of the "user_id" field.
 	UserID string `json:"user_id,omitempty"`
+	// DateJoined holds the value of the "date_joined" field.
+	DateJoined time.Time `json:"date_joined,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -51,6 +54,8 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case user.FieldUserID:
 			values[i] = new(sql.NullString)
+		case user.FieldDateJoined:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -77,6 +82,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
 				u.UserID = value.String
+			}
+		case user.FieldDateJoined:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field date_joined", values[i])
+			} else if value.Valid {
+				u.DateJoined = value.Time
 			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
@@ -121,6 +132,9 @@ func (u *User) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", u.ID))
 	builder.WriteString("user_id=")
 	builder.WriteString(u.UserID)
+	builder.WriteString(", ")
+	builder.WriteString("date_joined=")
+	builder.WriteString(u.DateJoined.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

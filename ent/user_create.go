@@ -8,6 +8,7 @@ import (
 	"discord-metrics-server/v2/ent/user"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -23,6 +24,12 @@ type UserCreate struct {
 // SetUserID sets the "user_id" field.
 func (uc *UserCreate) SetUserID(s string) *UserCreate {
 	uc.mutation.SetUserID(s)
+	return uc
+}
+
+// SetDateJoined sets the "date_joined" field.
+func (uc *UserCreate) SetDateJoined(t time.Time) *UserCreate {
+	uc.mutation.SetDateJoined(t)
 	return uc
 }
 
@@ -78,6 +85,9 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.UserID(); !ok {
 		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "User.user_id"`)}
 	}
+	if _, ok := uc.mutation.DateJoined(); !ok {
+		return &ValidationError{Name: "date_joined", err: errors.New(`ent: missing required field "User.date_joined"`)}
+	}
 	return nil
 }
 
@@ -107,6 +117,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.UserID(); ok {
 		_spec.SetField(user.FieldUserID, field.TypeString, value)
 		_node.UserID = value
+	}
+	if value, ok := uc.mutation.DateJoined(); ok {
+		_spec.SetField(user.FieldDateJoined, field.TypeTime, value)
+		_node.DateJoined = value
 	}
 	if nodes := uc.mutation.MessagesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

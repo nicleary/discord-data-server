@@ -8,23 +8,17 @@ import (
 	"net/http"
 )
 
-func Test(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "test",
-	})
-}
-
 func UploadMessage(c *gin.Context) {
-	var message DiscordMessage
+	var message NewDiscordMessage
 	if err := c.ShouldBindJSON(&message); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
-	fmt.Println("Message", message.Contents)
+	fmt.Println("Message", message.MessageData.Contents)
 	client := db.GetClient()
-	_, err := client.Message.Create().SetContents(message.Contents).Save(context.Background())
+	_, err := client.Message.Create().SetContents(message.MessageData.Contents).Save(context.Background())
 
 	if err != nil {
 		fmt.Println("error creating message object!")
@@ -37,7 +31,6 @@ func UploadMessage(c *gin.Context) {
 func Routes(router *gin.Engine) {
 	message := router.Group("api/v1/message")
 	{
-		message.GET("/test", Test)
 		message.POST("/", UploadMessage)
 	}
 }

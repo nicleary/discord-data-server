@@ -14,6 +14,8 @@ const (
 	FieldID = "id"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
+	// FieldDateJoined holds the string denoting the date_joined field in the database.
+	FieldDateJoined = "date_joined"
 	// EdgeMessages holds the string denoting the messages edge name in mutations.
 	EdgeMessages = "messages"
 	// Table holds the table name of the user in the database.
@@ -31,6 +33,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldUserID,
+	FieldDateJoined,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -54,6 +57,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByUserID orders the results by the user_id field.
 func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUserID, opts...).ToFunc()
+}
+
+// ByDateJoined orders the results by the date_joined field.
+func ByDateJoined(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDateJoined, opts...).ToFunc()
 }
 
 // ByMessagesCount orders the results by messages count.
