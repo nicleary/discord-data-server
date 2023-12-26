@@ -187,3 +187,4 @@ jobs:
         run: |
           echo ${{ secrets.RANCHER_KUBECONFIG }} | base64 -d > kube.config
           kubectl --kubeconfig kube.config config get-contexts
+          kubectl --kubeconfig kube.config get ns
