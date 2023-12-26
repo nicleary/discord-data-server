@@ -175,7 +175,7 @@ jobs:
     container:
       image: harbor.nicleary.com/dockerhub/dtzar/helm-kubectl:3.13.3
     env:
-      KUBECONFIG: ${{ secrets.RANCHER_KUBE_CONFIG }}
+      KUBECONFIG: ${{ secrets.RANCHER_KUBECONFIG }}
 #    needs:
 #      - codeql
 #      - trivy
