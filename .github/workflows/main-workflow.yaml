@@ -55,6 +55,10 @@ jobs:
   trivy-api:
     needs: build-api
     runs-on: nicleary-ubuntu-k8s
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -78,6 +82,10 @@ jobs:
   trivy-migrations:
     needs: build-migrations
     runs-on: nicleary-ubuntu-k8s
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -118,6 +126,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Adds golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
@@ -135,6 +148,10 @@ jobs:
 
   semgrep:
     name: Semgrep
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     runs-on: nicleary-ubuntu-k8s
     needs:
       - build-api
