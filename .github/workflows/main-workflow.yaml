@@ -112,7 +112,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'golang' ]
+        language: [ 'go' ]
 
     steps:
       - name: Checkout repository
