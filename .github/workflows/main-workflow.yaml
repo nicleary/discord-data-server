@@ -170,25 +170,17 @@ jobs:
           sarif_file: semgrep.sarif
         if: always()
 
-#  deploy:
-#    runs-on: nicleary-ubuntu-k8s
+  deploy:
+    runs-on: nicleary-ubuntu-k8s
+    container:
+      image: harbor.nicleary.com/dockerhub/dtzar/helm-kubectl:3.13.3
 #    needs:
 #      - codeql
 #      - trivy
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v3
-#
-#      - name: Find and Replace
-#        uses: jacobtomlinson/gha-find-replace@v2
-#        with:
-#          find: "@IMAGE_TAG"
-#          replace: "${{ github.run_number }}"
-#          regex: false
-#
-#      - name: Deploy
-#        uses: actions-hub/kubectl@master
-#        env:
-#          KUBE_CONFIG: ${{ secrets.RANCHER_KUBECONFIG }}
-#        with:
-#          args: apply -f k8s -n clearybottoy
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run kubectl
+        run: |
+          kubectl get ns
