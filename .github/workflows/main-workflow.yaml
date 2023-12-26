@@ -182,12 +182,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Set Kubernetes Context
-        uses: azure/k8s-set-context@v3.1
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.RANCHER_NON_64_CONFIG }}
 
       - name: Run kubectl
         run: |
-          kubectl --kubeconfig <(echo $KUBECONFIG_DATA | base64 --decode) config get-contexts
+          echo ${{ secrets.RANCHER_KUBECONFIG }} | base64 -d > ${KUBECONFIG}
+          kubectl config get-contexts
