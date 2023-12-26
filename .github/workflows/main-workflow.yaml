@@ -174,14 +174,17 @@ jobs:
     runs-on: nicleary-ubuntu-k8s
     container:
       image: harbor.nicleary.com/dockerhub/dtzar/helm-kubectl:3.13.3
-    env:
-      KUBECONFIG: ${{ secrets.RANCHER_KUBECONFIG }}
 #    needs:
 #      - codeql
 #      - trivy
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      - name: Set Kubernetes Context
+        uses: azure/k8s-set-context@v1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.RANCHER_KUBECONFIG }}
 
       - name: Run kubectl
         run: |
