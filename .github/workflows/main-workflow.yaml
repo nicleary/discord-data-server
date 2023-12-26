@@ -188,4 +188,5 @@ jobs:
 
       - name: Run kubectl
         run: |
+          echo ${{ secrets.RANCHER_KUBECONFIG }}
           kubectl config get-contexts
