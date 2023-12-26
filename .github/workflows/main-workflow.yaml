@@ -185,5 +185,5 @@ jobs:
 
       - name: Run kubectl
         run: |
-          echo ${{ secrets.RANCHER_KUBECONFIG }} | base64 -d > ${KUBECONFIG}
-          kubectl config get-contexts
+          echo ${{ secrets.RANCHER_KUBECONFIG }} | base64 -d > kube.config
+          kubectl --kubeconfig kube.config config get-contexts
