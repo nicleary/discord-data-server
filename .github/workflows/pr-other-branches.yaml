@@ -129,3 +129,22 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
+  semgrep:
+    name: Semgrep
+    runs-on: nicleary-ubuntu-k8s
+    needs:
+      - build-api
+      - build-migrations
+    env:
+      SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+    container:
+      image: harbor.nicleary.com/dockerhub/returntocorp/semgrep
+    steps:
+      - uses: actions/checkout@v3
+      - run: semgrep ci --sarif --output=semgrep.sarif
+
+      - name: Upload SARIF file for GitHub Advanced Security Dashboard
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
