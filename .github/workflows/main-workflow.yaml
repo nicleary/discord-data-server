@@ -142,7 +142,7 @@ jobs:
 #        uses: github/codeql-action/autobuild@v3
 #
 #      - name: Perform CodeQL Analysis
-#        uses: github/codeql-action/analyze@v3
+#        uses: github/codeql-action/analyze@v3econfig
 #        with:
 #          category: "/language:${{matrix.language}}"
 #
@@ -174,6 +174,8 @@ jobs:
     runs-on: nicleary-ubuntu-k8s
     container:
       image: harbor.nicleary.com/dockerhub/dtzar/helm-kubectl:3.13.3
+    env:
+      KUBECONFIG_DATA: ${{ secrets.RANCHER_KUBECONFIG }}
 #    needs:
 #      - codeql
 #      - trivy
@@ -188,5 +190,4 @@ jobs:
 
       - name: Run kubectl
         run: |
-          echo ${{ secrets.RANCHER_NON_64_CONFIG }}
-          kubectl config get-contexts
+          kubectl --kubeconfig <(echo $KUBECONFIG_DATA | base64 --decode) config get-contexts
