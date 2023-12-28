@@ -1,0 +1,11 @@
+migration:
+  job:
+    name: "run-migrations"
+    container:
+      image: "harbor.nicleary.com/library/discord-metrics-server-migrations"
+      tag: 16
+db:
+  user: "discorddata"
+  host: "maridadb"
+  port: 3306
+  database_name: "discorddata"

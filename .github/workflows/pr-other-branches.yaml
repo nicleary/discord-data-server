@@ -20,7 +20,7 @@ jobs:
           password: ${{ secrets.HARBOR_PASSWORD }}
 
       - name: Docker build
-        run: docker build -t harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} -f Dockerfile .
+        run: docker build -t harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} -f Dockerfile.migrations .
 
       - name: Tag docker image
         run: docker tag harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} harbor.nicleary.com/library/discord-metrics-server-api:latest

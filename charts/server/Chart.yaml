@@ -1,0 +1,11 @@
+apiVersion: v2
+appVersion: 0.0.1
+description: A chart to deploy the Discord Metrics Data Server
+keywords:
+  - discord
+  - golang
+maintainers:
+  - name: Nick Cleary
+    url: https://github.com/nicleary
+name: discorddata
+version: 0.0.1

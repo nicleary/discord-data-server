@@ -1,0 +1,13 @@
+image:
+  registry: "harbor.nicleary.com"
+  repository: "dockerhub/bitnami/mariadb"
+  tag: 11.2.2
+
+auth:
+  username: discorddata
+  database: discorddata
+
+primary:
+  persistence:
+    enabled: true
+    size: 16Gi
