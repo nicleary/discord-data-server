@@ -1,11 +1,22 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Values.migration.job.name }}
+  name: "{{ .Release.Name }}-migrate-{{ now | unixEpoch }}"
+  labels:
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   # Auto delete job to allow us to update it with subsequent deployments
   ttlSecondsAfterFinished: {{ .Values.migration.job.ttl }}
   template:
+    metadata:
+      name: "{{ .Release.Name }}-create-tables"
+      labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     spec:
       containers:
         - name: {{ .Values.migration.job.name }}-job
@@ -17,20 +28,6 @@ spec:
             - "--dir"
             - "file://ent/migrate/migrations"
             - "--url"
-            - "mysql://$MARIA_USER:$MARIA_PASS@$MARIA_HOST:$MARIA_PORT/$MARIA_DB"
-          env:
-            - name: "MARIA_USER"
-              value: {{ .Values.db.user }}
-            - name: "MARIA_HOST"
-              value: {{ .Values.db.host }}
-            - name: "MARIA_PORT"
-              value: {{ .Values.db.port | quote }}
-            - name: "MARIA_DB"
-              value: {{ .Values.db.database_name }}
-            - name: "MARIA_PASS"
-              valueFrom:
-                secretKeyRef:
-                  name: "mariadb"
-                  key: "mariadb-password"
+            - "mysql://{{ .Values.db.user }}:{{ .Values.db.pass }}@{{ .Values.db.host }}:{{ .Values.db.port }}/{{ .Values.db.database_name }}"
       restartPolicy: Never
   backoffLimit: 4

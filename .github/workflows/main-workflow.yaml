@@ -8,167 +8,167 @@ on:
 
 jobs:
 
-#  build-api:
-#    runs-on: nicleary-ubuntu-k8s
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v3
-#
-#      - name: Login to Harbor
-#        uses: docker/login-action@v2
-#        with:
-#          registry: harbor.nicleary.com
-#          username: ${{ secrets.HARBOR_USERNAME }}
-#          password: ${{ secrets.HARBOR_PASSWORD }}
-#
-#      - name: Docker build
-#        run: docker build -t harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} -f Dockerfile .
-#
-#      - name: Tag docker image
-#        run: docker tag harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} harbor.nicleary.com/library/discord-metrics-server-api:latest
-#
-#      - name: Push to harbor
-#        run: docker push harbor.nicleary.com/library/discord-metrics-server-api:latest && docker push harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }}
-#
-#  build-migrations:
-#    runs-on: nicleary-ubuntu-k8s
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v3
-#
-#      - name: Login to Harbor
-#        uses: docker/login-action@v2
-#        with:
-#          registry: harbor.nicleary.com
-#          username: ${{ secrets.HARBOR_USERNAME }}
-#          password: ${{ secrets.HARBOR_PASSWORD }}
-#
-#      - name: Docker build
-#        run: docker build -t harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }} -f Dockerfile.migrations .
-#
-#      - name: Tag docker image
-#        run: docker tag harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }} harbor.nicleary.com/library/discord-metrics-server-migrations:latest
-#
-#      - name: Push to harbor
-#        run: docker push harbor.nicleary.com/library/discord-metrics-server-migrations:latest && docker push harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }}
-#
-#  trivy-api:
-#    needs: build-api
-#    runs-on: nicleary-ubuntu-k8s
-#    permissions:
-#      actions: read
-#      contents: read
-#      security-events: write
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v3
-#
-#      - name: Docker pull
-#        run: docker pull harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }}
-#
-#      - name: Run Trivy vulnerability scanner
-#        uses: aquasecurity/trivy-action@master
-#        with:
-#          image-ref: 'harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }}'
-#          format: 'sarif'
-#          output: 'trivy-results.sarif'
-#          ignore-unfixed: true
-#
-#      - name: Upload Trivy scan results to GitHub Security tab
-#        uses: github/codeql-action/upload-sarif@v2
-#        with:
-#          sarif_file: 'trivy-results.sarif'
-#
-#  trivy-migrations:
-#    needs: build-migrations
-#    runs-on: nicleary-ubuntu-k8s
-#    permissions:
-#      actions: read
-#      contents: read
-#      security-events: write
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v3
-#
-#      - name: Docker pull
-#        run: docker pull harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }}
-#
-#      - name: Run Trivy vulnerability scanner
-#        uses: aquasecurity/trivy-action@master
-#        with:
-#          image-ref: 'harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }}'
-#          format: 'sarif'
-#          output: 'trivy-results.sarif'
-#          ignore-unfixed: true
-#
-#      - name: Upload Trivy scan results to GitHub Security tab
-#        uses: github/codeql-action/upload-sarif@v2
-#        with:
-#          sarif_file: 'trivy-results.sarif'
-#
-#  codeql:
-#    needs:
-#      - build-api
-#      - build-migrations
-#    name: Analyze
-#    runs-on: nicleary-ubuntu-k8s
-#    permissions:
-#      actions: read
-#      contents: read
-#      security-events: write
-#
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        language: [ 'go' ]
-#
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v4
-#
-#      - name: Adds golang
-#        uses: actions/setup-go@v4
-#        with:
-#          go-version: 1.21
-#
-#      # Initializes the CodeQL tools for scanning.
-#      - name: Initialize CodeQL
-#        uses: github/codeql-action/init@v2
-#        with:
-#          languages: ${{ matrix.language }}
-#          queries: security-and-quality
-#
-#      - name: Autobuild
-#        uses: github/codeql-action/autobuild@v3
-#
-#      - name: Perform CodeQL Analysis
-#        uses: github/codeql-action/analyze@v3econfig
-#        with:
-#          category: "/language:${{matrix.language}}"
-#
-#  semgrep:
-#    name: Semgrep
-#    permissions:
-#      actions: read
-#      contents: read
-#      security-events: write
-#    runs-on: nicleary-ubuntu-k8s
-#    needs:
-#      - build-api
-#      - build-migrations
-#    env:
-#      SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-#    container:
-#      image: harbor.nicleary.com/dockerhub/returntocorp/semgrep
-#    steps:
-#      - uses: actions/checkout@v3
-#      - run: semgrep ci --sarif --output=semgrep.sarif
-#
-#      - name: Upload SARIF file for GitHub Advanced Security Dashboard
-#        uses: github/codeql-action/upload-sarif@v2
-#        with:
-#          sarif_file: semgrep.sarif
-#        if: always()
+  build-api:
+    runs-on: nicleary-ubuntu-k8s
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Harbor
+        uses: docker/login-action@v2
+        with:
+          registry: harbor.nicleary.com
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Docker build
+        run: docker build -t harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} -f Dockerfile .
+
+      - name: Tag docker image
+        run: docker tag harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} harbor.nicleary.com/library/discord-metrics-server-api:latest
+
+      - name: Push to harbor
+        run: docker push harbor.nicleary.com/library/discord-metrics-server-api:latest && docker push harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }}
+
+  build-migrations:
+    runs-on: nicleary-ubuntu-k8s
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Harbor
+        uses: docker/login-action@v2
+        with:
+          registry: harbor.nicleary.com
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Docker build
+        run: docker build -t harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }} -f Dockerfile.migrations .
+
+      - name: Tag docker image
+        run: docker tag harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }} harbor.nicleary.com/library/discord-metrics-server-migrations:latest
+
+      - name: Push to harbor
+        run: docker push harbor.nicleary.com/library/discord-metrics-server-migrations:latest && docker push harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }}
+
+  trivy-api:
+    needs: build-api
+    runs-on: nicleary-ubuntu-k8s
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Docker pull
+        run: docker pull harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  trivy-migrations:
+    needs: build-migrations
+    runs-on: nicleary-ubuntu-k8s
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Docker pull
+        run: docker pull harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  codeql:
+    needs:
+      - build-api
+      - build-migrations
+    name: Analyze
+    runs-on: nicleary-ubuntu-k8s
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'go' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Adds golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3econfig
+        with:
+          category: "/language:${{matrix.language}}"
+
+  semgrep:
+    name: Semgrep
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    runs-on: nicleary-ubuntu-k8s
+    needs:
+      - build-api
+      - build-migrations
+    env:
+      SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+    container:
+      image: harbor.nicleary.com/dockerhub/returntocorp/semgrep
+    steps:
+      - uses: actions/checkout@v3
+      - run: semgrep ci --sarif --output=semgrep.sarif
+
+      - name: Upload SARIF file for GitHub Advanced Security Dashboard
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
 
   deploy:
     runs-on: nicleary-ubuntu-k8s
@@ -176,9 +176,9 @@ jobs:
       image: harbor.nicleary.com/dockerhub/dtzar/helm-kubectl:3.13.3
     env:
       KUBECONFIG_DATA: ${{ secrets.RANCHER_KUBECONFIG }}
-#    needs:
-#      - codeql
-#      - trivy
+    needs:
+      - codeql
+      - trivy
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -188,4 +188,5 @@ jobs:
           echo ${{ secrets.RANCHER_KUBECONFIG }} | base64 -d > kube.config
           kubectl --kubeconfig kube.config config get-contexts
           kubectl --kubeconfig kube.config get ns
-          helm upgrade -i mariadb oci://registry-1.docker.io/bitnamicharts/mariadb -n discorddataserver --create-namespace --values charts/mariadb/values.yaml --version 15.0.1 --kubeconfig kube.config
+          helm upgrade -i mariadb oci://registry-1.docker.io/bitnamicharts/mariadb -n discorddataserver --create-namespace --values charts/mariadb/values.yaml --set auth.password=${{secrets.DATABASE_PASS }} --version 15.0.1 --wait --kubeconfig kube.config
+          helm upgrade -i discord-data-server ./charts/server  -n discorddataserver --values charts/server/values.yaml --set db.pass=${{secrets.DATABASE_PASS }} --set migration.job.container.tag=${{ github.run_number }} --set api.container.tag=${{ github.run_number }} --wait --kubeconfig kube.config

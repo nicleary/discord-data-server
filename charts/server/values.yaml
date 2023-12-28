@@ -4,9 +4,15 @@ migration:
     name: "run-migrations"
     container:
       image: "harbor.nicleary.com/library/discord-metrics-server-migrations"
-      tag: 16
 db:
   user: "discorddata"
-  host: "maridadb"
+  host: "mariadb"
   port: 3306
   database_name: "discorddata"
+api:
+  name: discord-metrics-server
+  replicas: 1
+  container_port: 8080
+  container:
+    image: "harbor.nicleary.com/library/discord-metrics-server-api"
+host: "discordmetrics.nicleary.com"
