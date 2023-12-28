@@ -3,6 +3,8 @@ kind: Job
 metadata:
   name: {{ .Values.migration.job.name }}
 spec:
+  # Auto delete job to allow us to update it with subsequent deployments
+  ttlSecondsAfterFinished: {{ .Values.migration.job.ttl }}
   template:
     spec:
       containers:

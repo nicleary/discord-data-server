@@ -1,5 +1,6 @@
 migration:
   job:
+    ttl: 10
     name: "run-migrations"
     container:
       image: "harbor.nicleary.com/library/discord-metrics-server-migrations"
