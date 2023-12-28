@@ -178,7 +178,7 @@ jobs:
       KUBECONFIG_DATA: ${{ secrets.RANCHER_KUBECONFIG }}
     needs:
       - codeql
-      - trivy-migration
+      - trivy-migrations
       - trivy-api
     steps:
       - name: Checkout code
