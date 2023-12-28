@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.api.name }}
+  name: {{ .Values.api.name }}
+spec:
+  progressDeadlineSeconds: 600
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.api.name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 50%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.api.name }}
+    spec:
+      containers:
+        - image: {{ .Values.api.container.image }}:{{ .Values.api.container.tag }}
+          ports:
+            - containerPort: {{ .Values.api.container_port }}
+          imagePullPolicy: Always
+          name: {{ .Values.api.name }}
+          env:
+            - name: MARIA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb
+                  key: mariadb-password
+            - name: MARIA_USER
+              value: {{ .Values.db.user }}
+            - name: MARIA_HOST
+              value: {{ .Values.db.host }}
+            - name: MARIA_PORT
+              value: {{ .Values.db.port | quote }}
+            - name: MARIA_DB
+              value: {{ .Values.db.database_name }}

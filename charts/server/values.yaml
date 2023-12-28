@@ -1,0 +1,18 @@
+migration:
+  job:
+    ttl: 10
+    name: "run-migrations"
+    container:
+      image: "harbor.nicleary.com/library/discord-metrics-server-migrations"
+db:
+  user: "discorddata"
+  host: "mariadb"
+  port: 3306
+  database_name: "discorddata"
+api:
+  name: discord-metrics-server
+  replicas: 1
+  container_port: 8080
+  container:
+    image: "harbor.nicleary.com/library/discord-metrics-server-api"
+host: "discordmetrics.nicleary.com"

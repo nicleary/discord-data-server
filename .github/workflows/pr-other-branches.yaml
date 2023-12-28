@@ -20,13 +20,10 @@ jobs:
           password: ${{ secrets.HARBOR_PASSWORD }}
 
       - name: Docker build
-        run: docker build -t harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} -f Dockerfile .
-
-      - name: Tag docker image
-        run: docker tag harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} harbor.nicleary.com/library/discord-metrics-server-api:latest
+        run: docker build -t harbor.nicleary.com/library/discord-metrics-server-api:pr${{ github.run_number }} -f Dockerfile .
 
       - name: Push to harbor
-        run: docker push harbor.nicleary.com/library/discord-metrics-server-api:latest && docker push harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }}
+        run: docker push harbor.nicleary.com/library/discord-metrics-server-api:pr${{ github.run_number }}
 
   build-migrations:
     runs-on: nicleary-ubuntu-k8s
@@ -42,13 +39,10 @@ jobs:
           password: ${{ secrets.HARBOR_PASSWORD }}
 
       - name: Docker build
-        run: docker build -t harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }} -f Dockerfile .
-
-      - name: Tag docker image
-        run: docker tag harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }} harbor.nicleary.com/library/discord-metrics-server-migrations:latest
+        run: docker build -t harbor.nicleary.com/library/discord-metrics-server-migrations:pr${{ github.run_number }} -f Dockerfile.migrations .
 
       - name: Push to harbor
-        run: docker push harbor.nicleary.com/library/discord-metrics-server-migrations:latest && docker push harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }}
+        run: docker push harbor.nicleary.com/library/discord-metrics-server-migrations:pr${{ github.run_number }}
 
   trivy-api:
     permissions:
