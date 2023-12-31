@@ -21,14 +21,23 @@ jobs:
           username: ${{ secrets.HARBOR_USERNAME }}
           password: ${{ secrets.HARBOR_PASSWORD }}
 
+      - name: Login to dockerhub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Docker build
         run: docker build -t harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} -f Dockerfile .
 
       - name: Tag docker image
         run: docker tag harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} harbor.nicleary.com/library/discord-metrics-server-api:latest
 
+      - name: Tag for dockerhub
+        run: docker tag docker tag harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} nicklesbread/discord-metrics-server:api-${{github.run_number }}
+
       - name: Push to harbor
-        run: docker push harbor.nicleary.com/library/discord-metrics-server-api:latest && docker push harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }}
+        run: docker push harbor.nicleary.com/library/discord-metrics-server-api:latest && docker push harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} && docker push nicklesbread/discord-metrics-server:api-${{github.run_number }}
 
   build-migrations:
     runs-on: nicleary-ubuntu-k8s
@@ -43,14 +52,23 @@ jobs:
           username: ${{ secrets.HARBOR_USERNAME }}
           password: ${{ secrets.HARBOR_PASSWORD }}
 
+      - name: Login to dockerhub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Docker build
         run: docker build -t harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }} -f Dockerfile.migrations .
 
       - name: Tag docker image
         run: docker tag harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }} harbor.nicleary.com/library/discord-metrics-server-migrations:latest
 
+      - name: Tag for dockerhub
+        run: docker tag harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }} nicklesbread/discord-metrics-server:migrations-${{github.run_number }}
+
       - name: Push to harbor
-        run: docker push harbor.nicleary.com/library/discord-metrics-server-migrations:latest && docker push harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }}
+        run: docker push harbor.nicleary.com/library/discord-metrics-server-migrations:latest && docker push harbor.nicleary.com/library/discord-metrics-server-migrations:${{ github.run_number }} && docker push nicklesbread/discord-metrics-server:migrations-${{github.run_number }}
 
   trivy-api:
     needs: build-api
