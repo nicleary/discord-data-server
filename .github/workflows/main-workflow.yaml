@@ -207,5 +207,5 @@ jobs:
           echo ${{ secrets.RANCHER_KUBECONFIG }} | base64 -d > kube.config
           kubectl --kubeconfig kube.config config get-contexts
           kubectl --kubeconfig kube.config get ns
-          helm upgrade -i mariadb oci://registry-1.docker.io/bitnamicharts/mariadb -n discorddataserver --create-namespace --values charts/mariadb/values.yaml --set auth.password=${{secrets.DATABASE_PASS }} --version 15.0.1 --wait --kubeconfig kube.config
+          helm upgrade -i mariadb oci://registry-1.docker.io/bitnamicharts/mariadb -n discorddataserver --create-namespace --values charts/mariadb/values.yaml --set auth.password=${{secrets.DATABASE_PASS }} --set auth.rootPassword=${{ secrets.DATABASE_ROOT_PASS }} --version 15.0.1 --wait --kubeconfig kube.config
           helm upgrade -i discord-data-server ./charts/server  -n discorddataserver --values charts/server/values.yaml --set db.pass=${{secrets.DATABASE_PASS }} --set migration.job.container.tag=${{ github.run_number }} --set api.container.tag=${{ github.run_number }} --wait --kubeconfig kube.config
