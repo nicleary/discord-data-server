@@ -34,7 +34,7 @@ jobs:
         run: docker tag harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} harbor.nicleary.com/library/discord-metrics-server-api:latest
 
       - name: Tag for dockerhub
-        run: docker tag docker tag harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} nicklesbread/discord-metrics-server:api-${{github.run_number }}
+        run: docker tag harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} nicklesbread/discord-metrics-server:api-${{github.run_number }}
 
       - name: Push to harbor
         run: docker push harbor.nicleary.com/library/discord-metrics-server-api:latest && docker push harbor.nicleary.com/library/discord-metrics-server-api:${{ github.run_number }} && docker push nicklesbread/discord-metrics-server:api-${{github.run_number }}
