@@ -8,10 +8,12 @@ type DiscordUserID struct {
 type NewDiscordUser struct {
 	UserID     string `json:"user_id"`
 	DateJoined string `json:"date_joined"`
+	IsBot      bool   `json:"is_bot,omitempty"`
 }
 
 type DiscordUser struct {
 	ID         int    `json:"id"`
 	UserID     string `json:"user_id"`
 	DateJoined string `json:"date_joined"`
+	IsBot      bool   `json:"is_bot"`
 }

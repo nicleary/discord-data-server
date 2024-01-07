@@ -70,6 +70,11 @@ func SenderID(v int) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldSenderID, v))
 }
 
+// MessageID applies equality check predicate on the "message_id" field. It's identical to MessageIDEQ.
+func MessageID(v int) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldMessageID, v))
+}
+
 // ContentsEQ applies the EQ predicate on the "contents" field.
 func ContentsEQ(v string) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldContents, v))
@@ -193,6 +198,46 @@ func SenderIDIn(vs ...int) predicate.Message {
 // SenderIDNotIn applies the NotIn predicate on the "sender_id" field.
 func SenderIDNotIn(vs ...int) predicate.Message {
 	return predicate.Message(sql.FieldNotIn(FieldSenderID, vs...))
+}
+
+// MessageIDEQ applies the EQ predicate on the "message_id" field.
+func MessageIDEQ(v int) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldMessageID, v))
+}
+
+// MessageIDNEQ applies the NEQ predicate on the "message_id" field.
+func MessageIDNEQ(v int) predicate.Message {
+	return predicate.Message(sql.FieldNEQ(FieldMessageID, v))
+}
+
+// MessageIDIn applies the In predicate on the "message_id" field.
+func MessageIDIn(vs ...int) predicate.Message {
+	return predicate.Message(sql.FieldIn(FieldMessageID, vs...))
+}
+
+// MessageIDNotIn applies the NotIn predicate on the "message_id" field.
+func MessageIDNotIn(vs ...int) predicate.Message {
+	return predicate.Message(sql.FieldNotIn(FieldMessageID, vs...))
+}
+
+// MessageIDGT applies the GT predicate on the "message_id" field.
+func MessageIDGT(v int) predicate.Message {
+	return predicate.Message(sql.FieldGT(FieldMessageID, v))
+}
+
+// MessageIDGTE applies the GTE predicate on the "message_id" field.
+func MessageIDGTE(v int) predicate.Message {
+	return predicate.Message(sql.FieldGTE(FieldMessageID, v))
+}
+
+// MessageIDLT applies the LT predicate on the "message_id" field.
+func MessageIDLT(v int) predicate.Message {
+	return predicate.Message(sql.FieldLT(FieldMessageID, v))
+}
+
+// MessageIDLTE applies the LTE predicate on the "message_id" field.
+func MessageIDLTE(v int) predicate.Message {
+	return predicate.Message(sql.FieldLTE(FieldMessageID, v))
 }
 
 // HasSender applies the HasEdge predicate on the "sender" edge.

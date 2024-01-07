@@ -19,6 +19,7 @@ func UploadUser(c *gin.Context) {
 		return
 	}
 
+	// Parse datetime field
 	timeObject, err := utils.ConvertType(user.DateJoined)
 
 	if err != nil {
@@ -30,7 +31,11 @@ func UploadUser(c *gin.Context) {
 	}
 
 	client := db.GetClient()
-	userObject, err := client.User.Create().SetUserID(user.UserID).SetDateJoined(timeObject).Save(context.Background())
+	userObject, err := client.User.Create().
+		SetUserID(user.UserID).
+		SetDateJoined(timeObject).
+		SetIsBot(user.IsBot).
+		Save(context.Background())
 	if err != nil {
 		fmt.Println("error creating user object")
 		fmt.Println(err)
@@ -40,7 +45,6 @@ func UploadUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, UserToSchema(userObject))
-	return
 }
 
 func GetUser(c *gin.Context) {

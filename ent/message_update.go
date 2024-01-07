@@ -71,6 +71,27 @@ func (mu *MessageUpdate) SetNillableSenderID(i *int) *MessageUpdate {
 	return mu
 }
 
+// SetMessageID sets the "message_id" field.
+func (mu *MessageUpdate) SetMessageID(i int) *MessageUpdate {
+	mu.mutation.ResetMessageID()
+	mu.mutation.SetMessageID(i)
+	return mu
+}
+
+// SetNillableMessageID sets the "message_id" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableMessageID(i *int) *MessageUpdate {
+	if i != nil {
+		mu.SetMessageID(*i)
+	}
+	return mu
+}
+
+// AddMessageID adds i to the "message_id" field.
+func (mu *MessageUpdate) AddMessageID(i int) *MessageUpdate {
+	mu.mutation.AddMessageID(i)
+	return mu
+}
+
 // SetSender sets the "sender" edge to the User entity.
 func (mu *MessageUpdate) SetSender(u *User) *MessageUpdate {
 	return mu.SetSenderID(u.ID)
@@ -139,6 +160,12 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := mu.mutation.SentAt(); ok {
 		_spec.SetField(message.FieldSentAt, field.TypeTime, value)
+	}
+	if value, ok := mu.mutation.MessageID(); ok {
+		_spec.SetField(message.FieldMessageID, field.TypeInt, value)
+	}
+	if value, ok := mu.mutation.AddedMessageID(); ok {
+		_spec.AddField(message.FieldMessageID, field.TypeInt, value)
 	}
 	if mu.mutation.SenderCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -228,6 +255,27 @@ func (muo *MessageUpdateOne) SetNillableSenderID(i *int) *MessageUpdateOne {
 	if i != nil {
 		muo.SetSenderID(*i)
 	}
+	return muo
+}
+
+// SetMessageID sets the "message_id" field.
+func (muo *MessageUpdateOne) SetMessageID(i int) *MessageUpdateOne {
+	muo.mutation.ResetMessageID()
+	muo.mutation.SetMessageID(i)
+	return muo
+}
+
+// SetNillableMessageID sets the "message_id" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableMessageID(i *int) *MessageUpdateOne {
+	if i != nil {
+		muo.SetMessageID(*i)
+	}
+	return muo
+}
+
+// AddMessageID adds i to the "message_id" field.
+func (muo *MessageUpdateOne) AddMessageID(i int) *MessageUpdateOne {
+	muo.mutation.AddMessageID(i)
 	return muo
 }
 
@@ -329,6 +377,12 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 	}
 	if value, ok := muo.mutation.SentAt(); ok {
 		_spec.SetField(message.FieldSentAt, field.TypeTime, value)
+	}
+	if value, ok := muo.mutation.MessageID(); ok {
+		_spec.SetField(message.FieldMessageID, field.TypeInt, value)
+	}
+	if value, ok := muo.mutation.AddedMessageID(); ok {
+		_spec.AddField(message.FieldMessageID, field.TypeInt, value)
 	}
 	if muo.mutation.SenderCleared() {
 		edge := &sqlgraph.EdgeSpec{

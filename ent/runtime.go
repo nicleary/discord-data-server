@@ -2,8 +2,19 @@
 
 package ent
 
+import (
+	"discord-metrics-server/v2/ent/schema"
+	"discord-metrics-server/v2/ent/user"
+)
+
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	userFields := schema.User{}.Fields()
+	_ = userFields
+	// userDescIsBot is the schema descriptor for is_bot field.
+	userDescIsBot := userFields[2].Descriptor()
+	// user.DefaultIsBot holds the default value on creation for the is_bot field.
+	user.DefaultIsBot = userDescIsBot.Default.(bool)
 }

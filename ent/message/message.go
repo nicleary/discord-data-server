@@ -18,6 +18,8 @@ const (
 	FieldSentAt = "sent_at"
 	// FieldSenderID holds the string denoting the sender_id field in the database.
 	FieldSenderID = "sender_id"
+	// FieldMessageID holds the string denoting the message_id field in the database.
+	FieldMessageID = "message_id"
 	// EdgeSender holds the string denoting the sender edge name in mutations.
 	EdgeSender = "sender"
 	// Table holds the table name of the message in the database.
@@ -37,6 +39,7 @@ var Columns = []string{
 	FieldContents,
 	FieldSentAt,
 	FieldSenderID,
+	FieldMessageID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -70,6 +73,11 @@ func BySentAt(opts ...sql.OrderTermOption) OrderOption {
 // BySenderID orders the results by the sender_id field.
 func BySenderID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSenderID, opts...).ToFunc()
+}
+
+// ByMessageID orders the results by the message_id field.
+func ByMessageID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMessageID, opts...).ToFunc()
 }
 
 // BySenderField orders the results by sender field.

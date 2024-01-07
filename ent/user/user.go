@@ -16,6 +16,8 @@ const (
 	FieldUserID = "user_id"
 	// FieldDateJoined holds the string denoting the date_joined field in the database.
 	FieldDateJoined = "date_joined"
+	// FieldIsBot holds the string denoting the is_bot field in the database.
+	FieldIsBot = "is_bot"
 	// EdgeMessages holds the string denoting the messages edge name in mutations.
 	EdgeMessages = "messages"
 	// Table holds the table name of the user in the database.
@@ -34,6 +36,7 @@ var Columns = []string{
 	FieldID,
 	FieldUserID,
 	FieldDateJoined,
+	FieldIsBot,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -45,6 +48,11 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// DefaultIsBot holds the default value on creation for the "is_bot" field.
+	DefaultIsBot bool
+)
 
 // OrderOption defines the ordering options for the User queries.
 type OrderOption func(*sql.Selector)
@@ -62,6 +70,11 @@ func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 // ByDateJoined orders the results by the date_joined field.
 func ByDateJoined(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDateJoined, opts...).ToFunc()
+}
+
+// ByIsBot orders the results by the is_bot field.
+func ByIsBot(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsBot, opts...).ToFunc()
 }
 
 // ByMessagesCount orders the results by messages count.

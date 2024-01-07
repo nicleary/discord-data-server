@@ -37,6 +37,8 @@ type MessageMutation struct {
 	id            *int
 	contents      *string
 	sent_at       *time.Time
+	message_id    *int
+	addmessage_id *int
 	clearedFields map[string]struct{}
 	sender        *int
 	clearedsender bool
@@ -251,6 +253,62 @@ func (m *MessageMutation) ResetSenderID() {
 	m.sender = nil
 }
 
+// SetMessageID sets the "message_id" field.
+func (m *MessageMutation) SetMessageID(i int) {
+	m.message_id = &i
+	m.addmessage_id = nil
+}
+
+// MessageID returns the value of the "message_id" field in the mutation.
+func (m *MessageMutation) MessageID() (r int, exists bool) {
+	v := m.message_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMessageID returns the old "message_id" field's value of the Message entity.
+// If the Message object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageMutation) OldMessageID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMessageID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMessageID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMessageID: %w", err)
+	}
+	return oldValue.MessageID, nil
+}
+
+// AddMessageID adds i to the "message_id" field.
+func (m *MessageMutation) AddMessageID(i int) {
+	if m.addmessage_id != nil {
+		*m.addmessage_id += i
+	} else {
+		m.addmessage_id = &i
+	}
+}
+
+// AddedMessageID returns the value that was added to the "message_id" field in this mutation.
+func (m *MessageMutation) AddedMessageID() (r int, exists bool) {
+	v := m.addmessage_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMessageID resets all changes to the "message_id" field.
+func (m *MessageMutation) ResetMessageID() {
+	m.message_id = nil
+	m.addmessage_id = nil
+}
+
 // ClearSender clears the "sender" edge to the User entity.
 func (m *MessageMutation) ClearSender() {
 	m.clearedsender = true
@@ -312,7 +370,7 @@ func (m *MessageMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MessageMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.contents != nil {
 		fields = append(fields, message.FieldContents)
 	}
@@ -321,6 +379,9 @@ func (m *MessageMutation) Fields() []string {
 	}
 	if m.sender != nil {
 		fields = append(fields, message.FieldSenderID)
+	}
+	if m.message_id != nil {
+		fields = append(fields, message.FieldMessageID)
 	}
 	return fields
 }
@@ -336,6 +397,8 @@ func (m *MessageMutation) Field(name string) (ent.Value, bool) {
 		return m.SentAt()
 	case message.FieldSenderID:
 		return m.SenderID()
+	case message.FieldMessageID:
+		return m.MessageID()
 	}
 	return nil, false
 }
@@ -351,6 +414,8 @@ func (m *MessageMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldSentAt(ctx)
 	case message.FieldSenderID:
 		return m.OldSenderID(ctx)
+	case message.FieldMessageID:
+		return m.OldMessageID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Message field %s", name)
 }
@@ -381,6 +446,13 @@ func (m *MessageMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSenderID(v)
 		return nil
+	case message.FieldMessageID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessageID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Message field %s", name)
 }
@@ -389,6 +461,9 @@ func (m *MessageMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *MessageMutation) AddedFields() []string {
 	var fields []string
+	if m.addmessage_id != nil {
+		fields = append(fields, message.FieldMessageID)
+	}
 	return fields
 }
 
@@ -397,6 +472,8 @@ func (m *MessageMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *MessageMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case message.FieldMessageID:
+		return m.AddedMessageID()
 	}
 	return nil, false
 }
@@ -406,6 +483,13 @@ func (m *MessageMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *MessageMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case message.FieldMessageID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMessageID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Message numeric field %s", name)
 }
@@ -441,6 +525,9 @@ func (m *MessageMutation) ResetField(name string) error {
 		return nil
 	case message.FieldSenderID:
 		m.ResetSenderID()
+		return nil
+	case message.FieldMessageID:
+		m.ResetMessageID()
 		return nil
 	}
 	return fmt.Errorf("unknown Message field %s", name)
@@ -528,6 +615,7 @@ type UserMutation struct {
 	id              *int
 	user_id         *string
 	date_joined     *time.Time
+	is_bot          *bool
 	clearedFields   map[string]struct{}
 	messages        map[int]struct{}
 	removedmessages map[int]struct{}
@@ -707,6 +795,42 @@ func (m *UserMutation) ResetDateJoined() {
 	m.date_joined = nil
 }
 
+// SetIsBot sets the "is_bot" field.
+func (m *UserMutation) SetIsBot(b bool) {
+	m.is_bot = &b
+}
+
+// IsBot returns the value of the "is_bot" field in the mutation.
+func (m *UserMutation) IsBot() (r bool, exists bool) {
+	v := m.is_bot
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsBot returns the old "is_bot" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldIsBot(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsBot is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsBot requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsBot: %w", err)
+	}
+	return oldValue.IsBot, nil
+}
+
+// ResetIsBot resets all changes to the "is_bot" field.
+func (m *UserMutation) ResetIsBot() {
+	m.is_bot = nil
+}
+
 // AddMessageIDs adds the "messages" edge to the Message entity by ids.
 func (m *UserMutation) AddMessageIDs(ids ...int) {
 	if m.messages == nil {
@@ -795,12 +919,15 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 3)
 	if m.user_id != nil {
 		fields = append(fields, user.FieldUserID)
 	}
 	if m.date_joined != nil {
 		fields = append(fields, user.FieldDateJoined)
+	}
+	if m.is_bot != nil {
+		fields = append(fields, user.FieldIsBot)
 	}
 	return fields
 }
@@ -814,6 +941,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.UserID()
 	case user.FieldDateJoined:
 		return m.DateJoined()
+	case user.FieldIsBot:
+		return m.IsBot()
 	}
 	return nil, false
 }
@@ -827,6 +956,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldUserID(ctx)
 	case user.FieldDateJoined:
 		return m.OldDateJoined(ctx)
+	case user.FieldIsBot:
+		return m.OldIsBot(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -849,6 +980,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDateJoined(v)
+		return nil
+	case user.FieldIsBot:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsBot(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -904,6 +1042,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldDateJoined:
 		m.ResetDateJoined()
+		return nil
+	case user.FieldIsBot:
+		m.ResetIsBot()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

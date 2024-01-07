@@ -13,6 +13,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "contents", Type: field.TypeString, Size: 8192},
 		{Name: "sent_at", Type: field.TypeTime},
+		{Name: "message_id", Type: field.TypeInt},
 		{Name: "sender_id", Type: field.TypeInt},
 	}
 	// MessagesTable holds the schema information for the "messages" table.
@@ -23,7 +24,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "messages_users_messages",
-				Columns:    []*schema.Column{MessagesColumns[3]},
+				Columns:    []*schema.Column{MessagesColumns[4]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -37,7 +38,7 @@ var (
 			{
 				Name:    "message_sender_id",
 				Unique:  false,
-				Columns: []*schema.Column{MessagesColumns[3]},
+				Columns: []*schema.Column{MessagesColumns[4]},
 			},
 		},
 	}
@@ -46,6 +47,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "user_id", Type: field.TypeString, Unique: true, Size: 64},
 		{Name: "date_joined", Type: field.TypeTime},
+		{Name: "is_bot", Type: field.TypeBool, Default: false},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{

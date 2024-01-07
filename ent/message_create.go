@@ -39,6 +39,12 @@ func (mc *MessageCreate) SetSenderID(i int) *MessageCreate {
 	return mc
 }
 
+// SetMessageID sets the "message_id" field.
+func (mc *MessageCreate) SetMessageID(i int) *MessageCreate {
+	mc.mutation.SetMessageID(i)
+	return mc
+}
+
 // SetSender sets the "sender" edge to the User entity.
 func (mc *MessageCreate) SetSender(u *User) *MessageCreate {
 	return mc.SetSenderID(u.ID)
@@ -87,6 +93,9 @@ func (mc *MessageCreate) check() error {
 	if _, ok := mc.mutation.SenderID(); !ok {
 		return &ValidationError{Name: "sender_id", err: errors.New(`ent: missing required field "Message.sender_id"`)}
 	}
+	if _, ok := mc.mutation.MessageID(); !ok {
+		return &ValidationError{Name: "message_id", err: errors.New(`ent: missing required field "Message.message_id"`)}
+	}
 	if _, ok := mc.mutation.SenderID(); !ok {
 		return &ValidationError{Name: "sender", err: errors.New(`ent: missing required edge "Message.sender"`)}
 	}
@@ -123,6 +132,10 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 	if value, ok := mc.mutation.SentAt(); ok {
 		_spec.SetField(message.FieldSentAt, field.TypeTime, value)
 		_node.SentAt = value
+	}
+	if value, ok := mc.mutation.MessageID(); ok {
+		_spec.SetField(message.FieldMessageID, field.TypeInt, value)
+		_node.MessageID = value
 	}
 	if nodes := mc.mutation.SenderIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

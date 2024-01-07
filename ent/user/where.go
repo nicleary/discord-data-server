@@ -65,6 +65,11 @@ func DateJoined(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldDateJoined, v))
 }
 
+// IsBot applies equality check predicate on the "is_bot" field. It's identical to IsBotEQ.
+func IsBot(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldIsBot, v))
+}
+
 // UserIDEQ applies the EQ predicate on the "user_id" field.
 func UserIDEQ(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldUserID, v))
@@ -168,6 +173,16 @@ func DateJoinedLT(v time.Time) predicate.User {
 // DateJoinedLTE applies the LTE predicate on the "date_joined" field.
 func DateJoinedLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldDateJoined, v))
+}
+
+// IsBotEQ applies the EQ predicate on the "is_bot" field.
+func IsBotEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldIsBot, v))
+}
+
+// IsBotNEQ applies the NEQ predicate on the "is_bot" field.
+func IsBotNEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldIsBot, v))
 }
 
 // HasMessages applies the HasEdge predicate on the "messages" edge.

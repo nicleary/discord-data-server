@@ -57,6 +57,20 @@ func (uu *UserUpdate) SetNillableDateJoined(t *time.Time) *UserUpdate {
 	return uu
 }
 
+// SetIsBot sets the "is_bot" field.
+func (uu *UserUpdate) SetIsBot(b bool) *UserUpdate {
+	uu.mutation.SetIsBot(b)
+	return uu
+}
+
+// SetNillableIsBot sets the "is_bot" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableIsBot(b *bool) *UserUpdate {
+	if b != nil {
+		uu.SetIsBot(*b)
+	}
+	return uu
+}
+
 // AddMessageIDs adds the "messages" edge to the Message entity by IDs.
 func (uu *UserUpdate) AddMessageIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddMessageIDs(ids...)
@@ -139,6 +153,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := uu.mutation.DateJoined(); ok {
 		_spec.SetField(user.FieldDateJoined, field.TypeTime, value)
+	}
+	if value, ok := uu.mutation.IsBot(); ok {
+		_spec.SetField(user.FieldIsBot, field.TypeBool, value)
 	}
 	if uu.mutation.MessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -229,6 +246,20 @@ func (uuo *UserUpdateOne) SetDateJoined(t time.Time) *UserUpdateOne {
 func (uuo *UserUpdateOne) SetNillableDateJoined(t *time.Time) *UserUpdateOne {
 	if t != nil {
 		uuo.SetDateJoined(*t)
+	}
+	return uuo
+}
+
+// SetIsBot sets the "is_bot" field.
+func (uuo *UserUpdateOne) SetIsBot(b bool) *UserUpdateOne {
+	uuo.mutation.SetIsBot(b)
+	return uuo
+}
+
+// SetNillableIsBot sets the "is_bot" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableIsBot(b *bool) *UserUpdateOne {
+	if b != nil {
+		uuo.SetIsBot(*b)
 	}
 	return uuo
 }
@@ -345,6 +376,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.DateJoined(); ok {
 		_spec.SetField(user.FieldDateJoined, field.TypeTime, value)
+	}
+	if value, ok := uuo.mutation.IsBot(); ok {
+		_spec.SetField(user.FieldIsBot, field.TypeBool, value)
 	}
 	if uuo.mutation.MessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{

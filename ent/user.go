@@ -21,6 +21,8 @@ type User struct {
 	UserID string `json:"user_id,omitempty"`
 	// DateJoined holds the value of the "date_joined" field.
 	DateJoined time.Time `json:"date_joined,omitempty"`
+	// IsBot holds the value of the "is_bot" field.
+	IsBot bool `json:"is_bot,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -50,6 +52,8 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case user.FieldIsBot:
+			values[i] = new(sql.NullBool)
 		case user.FieldID:
 			values[i] = new(sql.NullInt64)
 		case user.FieldUserID:
@@ -88,6 +92,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field date_joined", values[i])
 			} else if value.Valid {
 				u.DateJoined = value.Time
+			}
+		case user.FieldIsBot:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_bot", values[i])
+			} else if value.Valid {
+				u.IsBot = value.Bool
 			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
@@ -135,6 +145,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("date_joined=")
 	builder.WriteString(u.DateJoined.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("is_bot=")
+	builder.WriteString(fmt.Sprintf("%v", u.IsBot))
 	builder.WriteByte(')')
 	return builder.String()
 }

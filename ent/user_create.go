@@ -33,6 +33,20 @@ func (uc *UserCreate) SetDateJoined(t time.Time) *UserCreate {
 	return uc
 }
 
+// SetIsBot sets the "is_bot" field.
+func (uc *UserCreate) SetIsBot(b bool) *UserCreate {
+	uc.mutation.SetIsBot(b)
+	return uc
+}
+
+// SetNillableIsBot sets the "is_bot" field if the given value is not nil.
+func (uc *UserCreate) SetNillableIsBot(b *bool) *UserCreate {
+	if b != nil {
+		uc.SetIsBot(*b)
+	}
+	return uc
+}
+
 // AddMessageIDs adds the "messages" edge to the Message entity by IDs.
 func (uc *UserCreate) AddMessageIDs(ids ...int) *UserCreate {
 	uc.mutation.AddMessageIDs(ids...)
@@ -55,6 +69,7 @@ func (uc *UserCreate) Mutation() *UserMutation {
 
 // Save creates the User in the database.
 func (uc *UserCreate) Save(ctx context.Context) (*User, error) {
+	uc.defaults()
 	return withHooks(ctx, uc.sqlSave, uc.mutation, uc.hooks)
 }
 
@@ -80,6 +95,14 @@ func (uc *UserCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (uc *UserCreate) defaults() {
+	if _, ok := uc.mutation.IsBot(); !ok {
+		v := user.DefaultIsBot
+		uc.mutation.SetIsBot(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.UserID(); !ok {
@@ -87,6 +110,9 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.DateJoined(); !ok {
 		return &ValidationError{Name: "date_joined", err: errors.New(`ent: missing required field "User.date_joined"`)}
+	}
+	if _, ok := uc.mutation.IsBot(); !ok {
+		return &ValidationError{Name: "is_bot", err: errors.New(`ent: missing required field "User.is_bot"`)}
 	}
 	return nil
 }
@@ -121,6 +147,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.DateJoined(); ok {
 		_spec.SetField(user.FieldDateJoined, field.TypeTime, value)
 		_node.DateJoined = value
+	}
+	if value, ok := uc.mutation.IsBot(); ok {
+		_spec.SetField(user.FieldIsBot, field.TypeBool, value)
+		_node.IsBot = value
 	}
 	if nodes := uc.mutation.MessagesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -159,6 +189,7 @@ func (ucb *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
 	for i := range ucb.builders {
 		func(i int, root context.Context) {
 			builder := ucb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*UserMutation)
 				if !ok {

@@ -24,6 +24,8 @@ type Message struct {
 	SentAt time.Time `json:"sent_at,omitempty"`
 	// SenderID holds the value of the "sender_id" field.
 	SenderID int `json:"sender_id,omitempty"`
+	// MessageID holds the value of the "message_id" field.
+	MessageID int `json:"message_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MessageQuery when eager-loading is set.
 	Edges        MessageEdges `json:"edges"`
@@ -57,7 +59,7 @@ func (*Message) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case message.FieldID, message.FieldSenderID:
+		case message.FieldID, message.FieldSenderID, message.FieldMessageID:
 			values[i] = new(sql.NullInt64)
 		case message.FieldContents:
 			values[i] = new(sql.NullString)
@@ -101,6 +103,12 @@ func (m *Message) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field sender_id", values[i])
 			} else if value.Valid {
 				m.SenderID = int(value.Int64)
+			}
+		case message.FieldMessageID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field message_id", values[i])
+			} else if value.Valid {
+				m.MessageID = int(value.Int64)
 			}
 		default:
 			m.selectValues.Set(columns[i], values[i])
@@ -151,6 +159,9 @@ func (m *Message) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("sender_id=")
 	builder.WriteString(fmt.Sprintf("%v", m.SenderID))
+	builder.WriteString(", ")
+	builder.WriteString("message_id=")
+	builder.WriteString(fmt.Sprintf("%v", m.MessageID))
 	builder.WriteByte(')')
 	return builder.String()
 }
