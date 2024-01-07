@@ -21,6 +21,7 @@ func (Message) Fields() []ent.Field {
 		}),
 		field.Time("sent_at"),
 		field.Int("sender_id"),
+		field.Int("message_id"),
 	}
 }
 
