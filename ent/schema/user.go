@@ -20,6 +20,7 @@ func (User) Fields() []ent.Field {
 			Size: 64,
 		}),
 		field.Time("date_joined"),
+		field.Bool("is_bot").Default(false),
 	}
 }
 
