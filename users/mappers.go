@@ -7,5 +7,6 @@ func UserToSchema(userObject *ent.User) DiscordUser {
 		ID:         userObject.ID,
 		UserID:     userObject.UserID,
 		DateJoined: userObject.DateJoined.String(),
+		IsBot:      userObject.IsBot,
 	}
 }
