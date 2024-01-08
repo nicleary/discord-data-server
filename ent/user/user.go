@@ -3,6 +3,8 @@
 package user
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 )
@@ -18,6 +20,10 @@ const (
 	FieldDateJoined = "date_joined"
 	// FieldIsBot holds the string denoting the is_bot field in the database.
 	FieldIsBot = "is_bot"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
+	FieldUpdatedAt = "updated_at"
 	// EdgeMessages holds the string denoting the messages edge name in mutations.
 	EdgeMessages = "messages"
 	// Table holds the table name of the user in the database.
@@ -37,6 +43,8 @@ var Columns = []string{
 	FieldUserID,
 	FieldDateJoined,
 	FieldIsBot,
+	FieldCreatedAt,
+	FieldUpdatedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -52,6 +60,12 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultIsBot holds the default value on creation for the "is_bot" field.
 	DefaultIsBot bool
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
+	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
+	DefaultUpdatedAt func() time.Time
+	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
+	UpdateDefaultUpdatedAt func() time.Time
 )
 
 // OrderOption defines the ordering options for the User queries.
@@ -75,6 +89,16 @@ func ByDateJoined(opts ...sql.OrderTermOption) OrderOption {
 // ByIsBot orders the results by the is_bot field.
 func ByIsBot(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsBot, opts...).ToFunc()
+}
+
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByUpdatedAt orders the results by the updated_at field.
+func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
 // ByMessagesCount orders the results by messages count.

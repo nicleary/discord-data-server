@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
+	"time"
 )
 
 // Message holds the schema definition for the Message entity.
@@ -22,6 +23,11 @@ func (Message) Fields() []ent.Field {
 		field.Time("sent_at"),
 		field.Int("sender_id"),
 		field.Int("message_id"),
+		field.Time("created_at").
+			Default(time.Now),
+		field.Time("updated_at").
+			Default(time.Now).
+			UpdateDefault(time.Now),
 	}
 }
 

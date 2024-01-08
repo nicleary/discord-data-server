@@ -92,6 +92,26 @@ func (mu *MessageUpdate) AddMessageID(i int) *MessageUpdate {
 	return mu
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (mu *MessageUpdate) SetCreatedAt(t time.Time) *MessageUpdate {
+	mu.mutation.SetCreatedAt(t)
+	return mu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableCreatedAt(t *time.Time) *MessageUpdate {
+	if t != nil {
+		mu.SetCreatedAt(*t)
+	}
+	return mu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (mu *MessageUpdate) SetUpdatedAt(t time.Time) *MessageUpdate {
+	mu.mutation.SetUpdatedAt(t)
+	return mu
+}
+
 // SetSender sets the "sender" edge to the User entity.
 func (mu *MessageUpdate) SetSender(u *User) *MessageUpdate {
 	return mu.SetSenderID(u.ID)
@@ -110,6 +130,7 @@ func (mu *MessageUpdate) ClearSender() *MessageUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (mu *MessageUpdate) Save(ctx context.Context) (int, error) {
+	mu.defaults()
 	return withHooks(ctx, mu.sqlSave, mu.mutation, mu.hooks)
 }
 
@@ -132,6 +153,14 @@ func (mu *MessageUpdate) Exec(ctx context.Context) error {
 func (mu *MessageUpdate) ExecX(ctx context.Context) {
 	if err := mu.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (mu *MessageUpdate) defaults() {
+	if _, ok := mu.mutation.UpdatedAt(); !ok {
+		v := message.UpdateDefaultUpdatedAt()
+		mu.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -166,6 +195,12 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := mu.mutation.AddedMessageID(); ok {
 		_spec.AddField(message.FieldMessageID, field.TypeInt, value)
+	}
+	if value, ok := mu.mutation.CreatedAt(); ok {
+		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := mu.mutation.UpdatedAt(); ok {
+		_spec.SetField(message.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if mu.mutation.SenderCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -279,6 +314,26 @@ func (muo *MessageUpdateOne) AddMessageID(i int) *MessageUpdateOne {
 	return muo
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (muo *MessageUpdateOne) SetCreatedAt(t time.Time) *MessageUpdateOne {
+	muo.mutation.SetCreatedAt(t)
+	return muo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableCreatedAt(t *time.Time) *MessageUpdateOne {
+	if t != nil {
+		muo.SetCreatedAt(*t)
+	}
+	return muo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (muo *MessageUpdateOne) SetUpdatedAt(t time.Time) *MessageUpdateOne {
+	muo.mutation.SetUpdatedAt(t)
+	return muo
+}
+
 // SetSender sets the "sender" edge to the User entity.
 func (muo *MessageUpdateOne) SetSender(u *User) *MessageUpdateOne {
 	return muo.SetSenderID(u.ID)
@@ -310,6 +365,7 @@ func (muo *MessageUpdateOne) Select(field string, fields ...string) *MessageUpda
 
 // Save executes the query and returns the updated Message entity.
 func (muo *MessageUpdateOne) Save(ctx context.Context) (*Message, error) {
+	muo.defaults()
 	return withHooks(ctx, muo.sqlSave, muo.mutation, muo.hooks)
 }
 
@@ -332,6 +388,14 @@ func (muo *MessageUpdateOne) Exec(ctx context.Context) error {
 func (muo *MessageUpdateOne) ExecX(ctx context.Context) {
 	if err := muo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (muo *MessageUpdateOne) defaults() {
+	if _, ok := muo.mutation.UpdatedAt(); !ok {
+		v := message.UpdateDefaultUpdatedAt()
+		muo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -383,6 +447,12 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 	}
 	if value, ok := muo.mutation.AddedMessageID(); ok {
 		_spec.AddField(message.FieldMessageID, field.TypeInt, value)
+	}
+	if value, ok := muo.mutation.CreatedAt(); ok {
+		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := muo.mutation.UpdatedAt(); ok {
+		_spec.SetField(message.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if muo.mutation.SenderCleared() {
 		edge := &sqlgraph.EdgeSpec{

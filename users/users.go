@@ -127,11 +127,48 @@ func UpdateUser(c *gin.Context) {
 		fmt.Println("error updating user object")
 		fmt.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid user",
+			"error": "Invalid user object",
 		})
 		return
 	}
 	c.JSON(http.StatusCreated, UserToSchema(userObject))
+}
+
+func DeleteUser(c *gin.Context) {
+	// Get user ID
+	var UserID DiscordUserID
+	if err := c.ShouldBindUri(&UserID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	client := db.GetClient()
+	userObject, err := client.User.Query().Where(user.UserID(UserID.UserID)).Only(context.Background())
+
+	if err != nil {
+		fmt.Println("Invalid user ID")
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid user",
+		})
+		return
+	}
+
+	err = client.User.
+		DeleteOne(userObject).
+		Exec(context.Background())
+
+	if err != nil {
+		fmt.Println("Error deleting user")
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Unable to delete user",
+		})
+	}
+
+	c.JSON(http.StatusOK, "")
 }
 
 func Routes(router *gin.Engine) {
@@ -140,5 +177,6 @@ func Routes(router *gin.Engine) {
 		user.POST("/", UploadUser)
 		user.GET("/:id", GetUser)
 		user.PATCH("/:id", UpdateUser)
+		user.DELETE("/:id", DeleteUser)
 	}
 }

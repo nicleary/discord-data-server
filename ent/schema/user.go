@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
+	"time"
 )
 
 // User schema holds the schema definition for the user entity
@@ -21,6 +22,11 @@ func (User) Fields() []ent.Field {
 		}),
 		field.Time("date_joined"),
 		field.Bool("is_bot").Default(false),
+		field.Time("created_at").
+			Default(time.Now),
+		field.Time("updated_at").
+			Default(time.Now).
+			UpdateDefault(time.Now),
 	}
 }
 
@@ -37,11 +43,3 @@ func (User) Indexes() []ent.Index {
 		index.Fields("user_id"),
 	}
 }
-
-//func (u User) UserObjectToDiscordUserSchema() users.DiscordUser {
-//	return users.DiscordUser{
-//		ID:     u.ID,
-//		UserID: u.UserID,
-//		DateJoined: u.DateJoined
-//	}
-//}
