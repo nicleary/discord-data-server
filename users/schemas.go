@@ -21,4 +21,6 @@ type DiscordUser struct {
 	UserID     string `json:"user_id"`
 	DateJoined string `json:"date_joined"`
 	IsBot      bool   `json:"is_bot"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
 }

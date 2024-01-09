@@ -18,7 +18,7 @@ func UploadMessage(c *gin.Context) {
 	}
 	fmt.Println("Message", message.MessageData.Contents)
 	client := db.GetClient()
-	_, err := client.Message.Create().SetContents(message.MessageData.Contents).Save(context.Background())
+	_, err := client.Message.Create().SetContents(message.MessageData.Contents).SetSenderID(message.UserID).SetMessageID(message.MessageData.MessageID).Save(context.Background())
 
 	if err != nil {
 		fmt.Println("error creating message object!")
