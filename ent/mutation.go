@@ -37,8 +37,7 @@ type MessageMutation struct {
 	id            *int
 	contents      *string
 	sent_at       *time.Time
-	message_id    *int
-	addmessage_id *int
+	message_id    *string
 	created_at    *time.Time
 	updated_at    *time.Time
 	clearedFields map[string]struct{}
@@ -256,13 +255,12 @@ func (m *MessageMutation) ResetSenderID() {
 }
 
 // SetMessageID sets the "message_id" field.
-func (m *MessageMutation) SetMessageID(i int) {
-	m.message_id = &i
-	m.addmessage_id = nil
+func (m *MessageMutation) SetMessageID(s string) {
+	m.message_id = &s
 }
 
 // MessageID returns the value of the "message_id" field in the mutation.
-func (m *MessageMutation) MessageID() (r int, exists bool) {
+func (m *MessageMutation) MessageID() (r string, exists bool) {
 	v := m.message_id
 	if v == nil {
 		return
@@ -273,7 +271,7 @@ func (m *MessageMutation) MessageID() (r int, exists bool) {
 // OldMessageID returns the old "message_id" field's value of the Message entity.
 // If the Message object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MessageMutation) OldMessageID(ctx context.Context) (v int, err error) {
+func (m *MessageMutation) OldMessageID(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMessageID is only allowed on UpdateOne operations")
 	}
@@ -287,28 +285,9 @@ func (m *MessageMutation) OldMessageID(ctx context.Context) (v int, err error) {
 	return oldValue.MessageID, nil
 }
 
-// AddMessageID adds i to the "message_id" field.
-func (m *MessageMutation) AddMessageID(i int) {
-	if m.addmessage_id != nil {
-		*m.addmessage_id += i
-	} else {
-		m.addmessage_id = &i
-	}
-}
-
-// AddedMessageID returns the value that was added to the "message_id" field in this mutation.
-func (m *MessageMutation) AddedMessageID() (r int, exists bool) {
-	v := m.addmessage_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
 // ResetMessageID resets all changes to the "message_id" field.
 func (m *MessageMutation) ResetMessageID() {
 	m.message_id = nil
-	m.addmessage_id = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -535,7 +514,7 @@ func (m *MessageMutation) SetField(name string, value ent.Value) error {
 		m.SetSenderID(v)
 		return nil
 	case message.FieldMessageID:
-		v, ok := value.(int)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -563,9 +542,6 @@ func (m *MessageMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *MessageMutation) AddedFields() []string {
 	var fields []string
-	if m.addmessage_id != nil {
-		fields = append(fields, message.FieldMessageID)
-	}
 	return fields
 }
 
@@ -574,8 +550,6 @@ func (m *MessageMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *MessageMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case message.FieldMessageID:
-		return m.AddedMessageID()
 	}
 	return nil, false
 }
@@ -585,13 +559,6 @@ func (m *MessageMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *MessageMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case message.FieldMessageID:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddMessageID(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Message numeric field %s", name)
 }

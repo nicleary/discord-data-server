@@ -22,7 +22,7 @@ func (Message) Fields() []ent.Field {
 		}),
 		field.Time("sent_at"),
 		field.Int("sender_id"),
-		field.Int("message_id"),
+		field.String("message_id").Unique(),
 		field.Time("created_at").
 			Default(time.Now),
 		field.Time("updated_at").
@@ -43,5 +43,6 @@ func (Message) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("sent_at"),
 		index.Fields("sender_id"),
+		index.Fields("message_id"),
 	}
 }

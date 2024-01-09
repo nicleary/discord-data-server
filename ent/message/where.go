@@ -71,7 +71,7 @@ func SenderID(v int) predicate.Message {
 }
 
 // MessageID applies equality check predicate on the "message_id" field. It's identical to MessageIDEQ.
-func MessageID(v int) predicate.Message {
+func MessageID(v string) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldMessageID, v))
 }
 
@@ -211,43 +211,68 @@ func SenderIDNotIn(vs ...int) predicate.Message {
 }
 
 // MessageIDEQ applies the EQ predicate on the "message_id" field.
-func MessageIDEQ(v int) predicate.Message {
+func MessageIDEQ(v string) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldMessageID, v))
 }
 
 // MessageIDNEQ applies the NEQ predicate on the "message_id" field.
-func MessageIDNEQ(v int) predicate.Message {
+func MessageIDNEQ(v string) predicate.Message {
 	return predicate.Message(sql.FieldNEQ(FieldMessageID, v))
 }
 
 // MessageIDIn applies the In predicate on the "message_id" field.
-func MessageIDIn(vs ...int) predicate.Message {
+func MessageIDIn(vs ...string) predicate.Message {
 	return predicate.Message(sql.FieldIn(FieldMessageID, vs...))
 }
 
 // MessageIDNotIn applies the NotIn predicate on the "message_id" field.
-func MessageIDNotIn(vs ...int) predicate.Message {
+func MessageIDNotIn(vs ...string) predicate.Message {
 	return predicate.Message(sql.FieldNotIn(FieldMessageID, vs...))
 }
 
 // MessageIDGT applies the GT predicate on the "message_id" field.
-func MessageIDGT(v int) predicate.Message {
+func MessageIDGT(v string) predicate.Message {
 	return predicate.Message(sql.FieldGT(FieldMessageID, v))
 }
 
 // MessageIDGTE applies the GTE predicate on the "message_id" field.
-func MessageIDGTE(v int) predicate.Message {
+func MessageIDGTE(v string) predicate.Message {
 	return predicate.Message(sql.FieldGTE(FieldMessageID, v))
 }
 
 // MessageIDLT applies the LT predicate on the "message_id" field.
-func MessageIDLT(v int) predicate.Message {
+func MessageIDLT(v string) predicate.Message {
 	return predicate.Message(sql.FieldLT(FieldMessageID, v))
 }
 
 // MessageIDLTE applies the LTE predicate on the "message_id" field.
-func MessageIDLTE(v int) predicate.Message {
+func MessageIDLTE(v string) predicate.Message {
 	return predicate.Message(sql.FieldLTE(FieldMessageID, v))
+}
+
+// MessageIDContains applies the Contains predicate on the "message_id" field.
+func MessageIDContains(v string) predicate.Message {
+	return predicate.Message(sql.FieldContains(FieldMessageID, v))
+}
+
+// MessageIDHasPrefix applies the HasPrefix predicate on the "message_id" field.
+func MessageIDHasPrefix(v string) predicate.Message {
+	return predicate.Message(sql.FieldHasPrefix(FieldMessageID, v))
+}
+
+// MessageIDHasSuffix applies the HasSuffix predicate on the "message_id" field.
+func MessageIDHasSuffix(v string) predicate.Message {
+	return predicate.Message(sql.FieldHasSuffix(FieldMessageID, v))
+}
+
+// MessageIDEqualFold applies the EqualFold predicate on the "message_id" field.
+func MessageIDEqualFold(v string) predicate.Message {
+	return predicate.Message(sql.FieldEqualFold(FieldMessageID, v))
+}
+
+// MessageIDContainsFold applies the ContainsFold predicate on the "message_id" field.
+func MessageIDContainsFold(v string) predicate.Message {
+	return predicate.Message(sql.FieldContainsFold(FieldMessageID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

@@ -72,23 +72,16 @@ func (mu *MessageUpdate) SetNillableSenderID(i *int) *MessageUpdate {
 }
 
 // SetMessageID sets the "message_id" field.
-func (mu *MessageUpdate) SetMessageID(i int) *MessageUpdate {
-	mu.mutation.ResetMessageID()
-	mu.mutation.SetMessageID(i)
+func (mu *MessageUpdate) SetMessageID(s string) *MessageUpdate {
+	mu.mutation.SetMessageID(s)
 	return mu
 }
 
 // SetNillableMessageID sets the "message_id" field if the given value is not nil.
-func (mu *MessageUpdate) SetNillableMessageID(i *int) *MessageUpdate {
-	if i != nil {
-		mu.SetMessageID(*i)
+func (mu *MessageUpdate) SetNillableMessageID(s *string) *MessageUpdate {
+	if s != nil {
+		mu.SetMessageID(*s)
 	}
-	return mu
-}
-
-// AddMessageID adds i to the "message_id" field.
-func (mu *MessageUpdate) AddMessageID(i int) *MessageUpdate {
-	mu.mutation.AddMessageID(i)
 	return mu
 }
 
@@ -191,10 +184,7 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(message.FieldSentAt, field.TypeTime, value)
 	}
 	if value, ok := mu.mutation.MessageID(); ok {
-		_spec.SetField(message.FieldMessageID, field.TypeInt, value)
-	}
-	if value, ok := mu.mutation.AddedMessageID(); ok {
-		_spec.AddField(message.FieldMessageID, field.TypeInt, value)
+		_spec.SetField(message.FieldMessageID, field.TypeString, value)
 	}
 	if value, ok := mu.mutation.CreatedAt(); ok {
 		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
@@ -294,23 +284,16 @@ func (muo *MessageUpdateOne) SetNillableSenderID(i *int) *MessageUpdateOne {
 }
 
 // SetMessageID sets the "message_id" field.
-func (muo *MessageUpdateOne) SetMessageID(i int) *MessageUpdateOne {
-	muo.mutation.ResetMessageID()
-	muo.mutation.SetMessageID(i)
+func (muo *MessageUpdateOne) SetMessageID(s string) *MessageUpdateOne {
+	muo.mutation.SetMessageID(s)
 	return muo
 }
 
 // SetNillableMessageID sets the "message_id" field if the given value is not nil.
-func (muo *MessageUpdateOne) SetNillableMessageID(i *int) *MessageUpdateOne {
-	if i != nil {
-		muo.SetMessageID(*i)
+func (muo *MessageUpdateOne) SetNillableMessageID(s *string) *MessageUpdateOne {
+	if s != nil {
+		muo.SetMessageID(*s)
 	}
-	return muo
-}
-
-// AddMessageID adds i to the "message_id" field.
-func (muo *MessageUpdateOne) AddMessageID(i int) *MessageUpdateOne {
-	muo.mutation.AddMessageID(i)
 	return muo
 }
 
@@ -443,10 +426,7 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 		_spec.SetField(message.FieldSentAt, field.TypeTime, value)
 	}
 	if value, ok := muo.mutation.MessageID(); ok {
-		_spec.SetField(message.FieldMessageID, field.TypeInt, value)
-	}
-	if value, ok := muo.mutation.AddedMessageID(); ok {
-		_spec.AddField(message.FieldMessageID, field.TypeInt, value)
+		_spec.SetField(message.FieldMessageID, field.TypeString, value)
 	}
 	if value, ok := muo.mutation.CreatedAt(); ok {
 		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)

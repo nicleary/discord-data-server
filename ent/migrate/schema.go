@@ -13,7 +13,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "contents", Type: field.TypeString, Size: 8192},
 		{Name: "sent_at", Type: field.TypeTime},
-		{Name: "message_id", Type: field.TypeInt},
+		{Name: "message_id", Type: field.TypeString, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "sender_id", Type: field.TypeInt},
@@ -41,6 +41,11 @@ var (
 				Name:    "message_sender_id",
 				Unique:  false,
 				Columns: []*schema.Column{MessagesColumns[6]},
+			},
+			{
+				Name:    "message_message_id",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[3]},
 			},
 		},
 	}

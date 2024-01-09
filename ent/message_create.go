@@ -40,8 +40,8 @@ func (mc *MessageCreate) SetSenderID(i int) *MessageCreate {
 }
 
 // SetMessageID sets the "message_id" field.
-func (mc *MessageCreate) SetMessageID(i int) *MessageCreate {
-	mc.mutation.SetMessageID(i)
+func (mc *MessageCreate) SetMessageID(s string) *MessageCreate {
+	mc.mutation.SetMessageID(s)
 	return mc
 }
 
@@ -181,7 +181,7 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 		_node.SentAt = value
 	}
 	if value, ok := mc.mutation.MessageID(); ok {
-		_spec.SetField(message.FieldMessageID, field.TypeInt, value)
+		_spec.SetField(message.FieldMessageID, field.TypeString, value)
 		_node.MessageID = value
 	}
 	if value, ok := mc.mutation.CreatedAt(); ok {
