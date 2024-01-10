@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"discord-metrics-server/v2/ent/message"
 	"discord-metrics-server/v2/ent/predicate"
 	"discord-metrics-server/v2/ent/user"
@@ -18,11 +19,13 @@ import (
 // MessageQuery is the builder for querying Message entities.
 type MessageQuery struct {
 	config
-	ctx        *QueryContext
-	order      []message.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Message
-	withSender *UserQuery
+	ctx            *QueryContext
+	order          []message.OrderOption
+	inters         []Interceptor
+	predicates     []predicate.Message
+	withSender     *UserQuery
+	withInReplyTo  *MessageQuery
+	withResponders *MessageQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -74,6 +77,50 @@ func (mq *MessageQuery) QuerySender() *UserQuery {
 			sqlgraph.From(message.Table, message.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, message.SenderTable, message.SenderColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryInReplyTo chains the current query on the "in_reply_to" edge.
+func (mq *MessageQuery) QueryInReplyTo() *MessageQuery {
+	query := (&MessageClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, selector),
+			sqlgraph.To(message.Table, message.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, message.InReplyToTable, message.InReplyToColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryResponders chains the current query on the "responders" edge.
+func (mq *MessageQuery) QueryResponders() *MessageQuery {
+	query := (&MessageClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, selector),
+			sqlgraph.To(message.Table, message.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, message.RespondersTable, message.RespondersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
 		return fromU, nil
@@ -268,12 +315,14 @@ func (mq *MessageQuery) Clone() *MessageQuery {
 		return nil
 	}
 	return &MessageQuery{
-		config:     mq.config,
-		ctx:        mq.ctx.Clone(),
-		order:      append([]message.OrderOption{}, mq.order...),
-		inters:     append([]Interceptor{}, mq.inters...),
-		predicates: append([]predicate.Message{}, mq.predicates...),
-		withSender: mq.withSender.Clone(),
+		config:         mq.config,
+		ctx:            mq.ctx.Clone(),
+		order:          append([]message.OrderOption{}, mq.order...),
+		inters:         append([]Interceptor{}, mq.inters...),
+		predicates:     append([]predicate.Message{}, mq.predicates...),
+		withSender:     mq.withSender.Clone(),
+		withInReplyTo:  mq.withInReplyTo.Clone(),
+		withResponders: mq.withResponders.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
@@ -288,6 +337,28 @@ func (mq *MessageQuery) WithSender(opts ...func(*UserQuery)) *MessageQuery {
 		opt(query)
 	}
 	mq.withSender = query
+	return mq
+}
+
+// WithInReplyTo tells the query-builder to eager-load the nodes that are connected to
+// the "in_reply_to" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MessageQuery) WithInReplyTo(opts ...func(*MessageQuery)) *MessageQuery {
+	query := (&MessageClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withInReplyTo = query
+	return mq
+}
+
+// WithResponders tells the query-builder to eager-load the nodes that are connected to
+// the "responders" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MessageQuery) WithResponders(opts ...func(*MessageQuery)) *MessageQuery {
+	query := (&MessageClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withResponders = query
 	return mq
 }
 
@@ -369,8 +440,10 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	var (
 		nodes       = []*Message{}
 		_spec       = mq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [3]bool{
 			mq.withSender != nil,
+			mq.withInReplyTo != nil,
+			mq.withResponders != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -394,6 +467,19 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	if query := mq.withSender; query != nil {
 		if err := mq.loadSender(ctx, query, nodes, nil,
 			func(n *Message, e *User) { n.Edges.Sender = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := mq.withInReplyTo; query != nil {
+		if err := mq.loadInReplyTo(ctx, query, nodes, nil,
+			func(n *Message, e *Message) { n.Edges.InReplyTo = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := mq.withResponders; query != nil {
+		if err := mq.loadResponders(ctx, query, nodes,
+			func(n *Message) { n.Edges.Responders = []*Message{} },
+			func(n *Message, e *Message) { n.Edges.Responders = append(n.Edges.Responders, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -429,6 +515,65 @@ func (mq *MessageQuery) loadSender(ctx context.Context, query *UserQuery, nodes 
 	}
 	return nil
 }
+func (mq *MessageQuery) loadInReplyTo(ctx context.Context, query *MessageQuery, nodes []*Message, init func(*Message), assign func(*Message, *Message)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Message)
+	for i := range nodes {
+		fk := nodes[i].InReplyToID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(message.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "in_reply_to_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (mq *MessageQuery) loadResponders(ctx context.Context, query *MessageQuery, nodes []*Message, init func(*Message), assign func(*Message, *Message)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Message)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(message.FieldInReplyToID)
+	}
+	query.Where(predicate.Message(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(message.RespondersColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.InReplyToID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "in_reply_to_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 
 func (mq *MessageQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := mq.querySpec()
@@ -457,6 +602,9 @@ func (mq *MessageQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if mq.withSender != nil {
 			_spec.Node.AddColumnOnce(message.FieldSenderID)
+		}
+		if mq.withInReplyTo != nil {
+			_spec.Node.AddColumnOnce(message.FieldInReplyToID)
 		}
 	}
 	if ps := mq.predicates; len(ps) > 0 {

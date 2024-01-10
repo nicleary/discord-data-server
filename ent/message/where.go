@@ -75,6 +75,16 @@ func MessageID(v string) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldMessageID, v))
 }
 
+// ChannelID applies equality check predicate on the "channel_id" field. It's identical to ChannelIDEQ.
+func ChannelID(v string) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldChannelID, v))
+}
+
+// InReplyToID applies equality check predicate on the "in_reply_to_id" field. It's identical to InReplyToIDEQ.
+func InReplyToID(v int) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldInReplyToID, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldCreatedAt, v))
@@ -275,6 +285,101 @@ func MessageIDContainsFold(v string) predicate.Message {
 	return predicate.Message(sql.FieldContainsFold(FieldMessageID, v))
 }
 
+// ChannelIDEQ applies the EQ predicate on the "channel_id" field.
+func ChannelIDEQ(v string) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldChannelID, v))
+}
+
+// ChannelIDNEQ applies the NEQ predicate on the "channel_id" field.
+func ChannelIDNEQ(v string) predicate.Message {
+	return predicate.Message(sql.FieldNEQ(FieldChannelID, v))
+}
+
+// ChannelIDIn applies the In predicate on the "channel_id" field.
+func ChannelIDIn(vs ...string) predicate.Message {
+	return predicate.Message(sql.FieldIn(FieldChannelID, vs...))
+}
+
+// ChannelIDNotIn applies the NotIn predicate on the "channel_id" field.
+func ChannelIDNotIn(vs ...string) predicate.Message {
+	return predicate.Message(sql.FieldNotIn(FieldChannelID, vs...))
+}
+
+// ChannelIDGT applies the GT predicate on the "channel_id" field.
+func ChannelIDGT(v string) predicate.Message {
+	return predicate.Message(sql.FieldGT(FieldChannelID, v))
+}
+
+// ChannelIDGTE applies the GTE predicate on the "channel_id" field.
+func ChannelIDGTE(v string) predicate.Message {
+	return predicate.Message(sql.FieldGTE(FieldChannelID, v))
+}
+
+// ChannelIDLT applies the LT predicate on the "channel_id" field.
+func ChannelIDLT(v string) predicate.Message {
+	return predicate.Message(sql.FieldLT(FieldChannelID, v))
+}
+
+// ChannelIDLTE applies the LTE predicate on the "channel_id" field.
+func ChannelIDLTE(v string) predicate.Message {
+	return predicate.Message(sql.FieldLTE(FieldChannelID, v))
+}
+
+// ChannelIDContains applies the Contains predicate on the "channel_id" field.
+func ChannelIDContains(v string) predicate.Message {
+	return predicate.Message(sql.FieldContains(FieldChannelID, v))
+}
+
+// ChannelIDHasPrefix applies the HasPrefix predicate on the "channel_id" field.
+func ChannelIDHasPrefix(v string) predicate.Message {
+	return predicate.Message(sql.FieldHasPrefix(FieldChannelID, v))
+}
+
+// ChannelIDHasSuffix applies the HasSuffix predicate on the "channel_id" field.
+func ChannelIDHasSuffix(v string) predicate.Message {
+	return predicate.Message(sql.FieldHasSuffix(FieldChannelID, v))
+}
+
+// ChannelIDEqualFold applies the EqualFold predicate on the "channel_id" field.
+func ChannelIDEqualFold(v string) predicate.Message {
+	return predicate.Message(sql.FieldEqualFold(FieldChannelID, v))
+}
+
+// ChannelIDContainsFold applies the ContainsFold predicate on the "channel_id" field.
+func ChannelIDContainsFold(v string) predicate.Message {
+	return predicate.Message(sql.FieldContainsFold(FieldChannelID, v))
+}
+
+// InReplyToIDEQ applies the EQ predicate on the "in_reply_to_id" field.
+func InReplyToIDEQ(v int) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldInReplyToID, v))
+}
+
+// InReplyToIDNEQ applies the NEQ predicate on the "in_reply_to_id" field.
+func InReplyToIDNEQ(v int) predicate.Message {
+	return predicate.Message(sql.FieldNEQ(FieldInReplyToID, v))
+}
+
+// InReplyToIDIn applies the In predicate on the "in_reply_to_id" field.
+func InReplyToIDIn(vs ...int) predicate.Message {
+	return predicate.Message(sql.FieldIn(FieldInReplyToID, vs...))
+}
+
+// InReplyToIDNotIn applies the NotIn predicate on the "in_reply_to_id" field.
+func InReplyToIDNotIn(vs ...int) predicate.Message {
+	return predicate.Message(sql.FieldNotIn(FieldInReplyToID, vs...))
+}
+
+// InReplyToIDIsNil applies the IsNil predicate on the "in_reply_to_id" field.
+func InReplyToIDIsNil() predicate.Message {
+	return predicate.Message(sql.FieldIsNull(FieldInReplyToID))
+}
+
+// InReplyToIDNotNil applies the NotNil predicate on the "in_reply_to_id" field.
+func InReplyToIDNotNil() predicate.Message {
+	return predicate.Message(sql.FieldNotNull(FieldInReplyToID))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldCreatedAt, v))
@@ -370,6 +475,52 @@ func HasSender() predicate.Message {
 func HasSenderWith(preds ...predicate.User) predicate.Message {
 	return predicate.Message(func(s *sql.Selector) {
 		step := newSenderStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasInReplyTo applies the HasEdge predicate on the "in_reply_to" edge.
+func HasInReplyTo() predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, InReplyToTable, InReplyToColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasInReplyToWith applies the HasEdge predicate on the "in_reply_to" edge with a given conditions (other predicates).
+func HasInReplyToWith(preds ...predicate.Message) predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := newInReplyToStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasResponders applies the HasEdge predicate on the "responders" edge.
+func HasResponders() predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RespondersTable, RespondersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRespondersWith applies the HasEdge predicate on the "responders" edge with a given conditions (other predicates).
+func HasRespondersWith(preds ...predicate.Message) predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := newRespondersStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -45,6 +45,26 @@ func (mc *MessageCreate) SetMessageID(s string) *MessageCreate {
 	return mc
 }
 
+// SetChannelID sets the "channel_id" field.
+func (mc *MessageCreate) SetChannelID(s string) *MessageCreate {
+	mc.mutation.SetChannelID(s)
+	return mc
+}
+
+// SetInReplyToID sets the "in_reply_to_id" field.
+func (mc *MessageCreate) SetInReplyToID(i int) *MessageCreate {
+	mc.mutation.SetInReplyToID(i)
+	return mc
+}
+
+// SetNillableInReplyToID sets the "in_reply_to_id" field if the given value is not nil.
+func (mc *MessageCreate) SetNillableInReplyToID(i *int) *MessageCreate {
+	if i != nil {
+		mc.SetInReplyToID(*i)
+	}
+	return mc
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (mc *MessageCreate) SetCreatedAt(t time.Time) *MessageCreate {
 	mc.mutation.SetCreatedAt(t)
@@ -76,6 +96,26 @@ func (mc *MessageCreate) SetNillableUpdatedAt(t *time.Time) *MessageCreate {
 // SetSender sets the "sender" edge to the User entity.
 func (mc *MessageCreate) SetSender(u *User) *MessageCreate {
 	return mc.SetSenderID(u.ID)
+}
+
+// SetInReplyTo sets the "in_reply_to" edge to the Message entity.
+func (mc *MessageCreate) SetInReplyTo(m *Message) *MessageCreate {
+	return mc.SetInReplyToID(m.ID)
+}
+
+// AddResponderIDs adds the "responders" edge to the Message entity by IDs.
+func (mc *MessageCreate) AddResponderIDs(ids ...int) *MessageCreate {
+	mc.mutation.AddResponderIDs(ids...)
+	return mc
+}
+
+// AddResponders adds the "responders" edges to the Message entity.
+func (mc *MessageCreate) AddResponders(m ...*Message) *MessageCreate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return mc.AddResponderIDs(ids...)
 }
 
 // Mutation returns the MessageMutation object of the builder.
@@ -137,6 +177,9 @@ func (mc *MessageCreate) check() error {
 	if _, ok := mc.mutation.MessageID(); !ok {
 		return &ValidationError{Name: "message_id", err: errors.New(`ent: missing required field "Message.message_id"`)}
 	}
+	if _, ok := mc.mutation.ChannelID(); !ok {
+		return &ValidationError{Name: "channel_id", err: errors.New(`ent: missing required field "Message.channel_id"`)}
+	}
 	if _, ok := mc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Message.created_at"`)}
 	}
@@ -184,6 +227,10 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 		_spec.SetField(message.FieldMessageID, field.TypeString, value)
 		_node.MessageID = value
 	}
+	if value, ok := mc.mutation.ChannelID(); ok {
+		_spec.SetField(message.FieldChannelID, field.TypeString, value)
+		_node.ChannelID = value
+	}
 	if value, ok := mc.mutation.CreatedAt(); ok {
 		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -207,6 +254,39 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.SenderID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := mc.mutation.InReplyToIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.InReplyToTable,
+			Columns: []string{message.InReplyToColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.InReplyToID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := mc.mutation.RespondersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   message.RespondersTable,
+			Columns: []string{message.RespondersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

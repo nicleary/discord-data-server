@@ -10,9 +10,10 @@ type DiscordMessageID struct {
 }
 
 type DiscordMessageQuery struct {
-	PageSize      int `form:"page_size"`
-	PageNumber    int `form:"page_number"`
-	MetricsUserID int `form:"metrics_user_id"`
+	PageSize   int    `form:"page_size"`
+	PageNumber int    `form:"page_number"`
+	UserID     string `form:"user_id"`
+	ChannelID  string `form:"channel_id"`
 }
 
 func (q DiscordMessageQuery) validate() *string {
@@ -37,6 +38,8 @@ type DiscordMessage struct {
 	Contents  string `json:"contents"`
 	SentAt    string `json:"sent_at"`
 	MessageID string `json:"message_id"`
+	ChannelID string `json:"channel_id"`
+	InReplyTo string `json:"in_reply_to"`
 }
 
 type DiscordMessageResponse struct {
@@ -45,6 +48,8 @@ type DiscordMessageResponse struct {
 	Contents  string            `json:"contents"`
 	SentAt    string            `json:"sent_at"`
 	MessageID string            `json:"message_id"`
+	ChannelID string            `json:"channel_id"`
 	CreatedAt string            `json:"created_at"`
 	UpdatedAt string            `json:"updated_at"`
+	InReplyTo string            `json:"in_reply_to"`
 }

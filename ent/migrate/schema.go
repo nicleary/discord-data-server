@@ -14,8 +14,10 @@ var (
 		{Name: "contents", Type: field.TypeString, Size: 8192},
 		{Name: "sent_at", Type: field.TypeTime},
 		{Name: "message_id", Type: field.TypeString, Unique: true},
+		{Name: "channel_id", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "in_reply_to_id", Type: field.TypeInt, Nullable: true},
 		{Name: "sender_id", Type: field.TypeInt},
 	}
 	// MessagesTable holds the schema information for the "messages" table.
@@ -25,8 +27,14 @@ var (
 		PrimaryKey: []*schema.Column{MessagesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
+				Symbol:     "messages_messages_responders",
+				Columns:    []*schema.Column{MessagesColumns[7]},
+				RefColumns: []*schema.Column{MessagesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
 				Symbol:     "messages_users_messages",
-				Columns:    []*schema.Column{MessagesColumns[6]},
+				Columns:    []*schema.Column{MessagesColumns[8]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -40,12 +48,17 @@ var (
 			{
 				Name:    "message_sender_id",
 				Unique:  false,
-				Columns: []*schema.Column{MessagesColumns[6]},
+				Columns: []*schema.Column{MessagesColumns[8]},
 			},
 			{
 				Name:    "message_message_id",
 				Unique:  false,
 				Columns: []*schema.Column{MessagesColumns[3]},
+			},
+			{
+				Name:    "message_channel_id",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[4]},
 			},
 		},
 	}
@@ -79,5 +92,6 @@ var (
 )
 
 func init() {
-	MessagesTable.ForeignKeys[0].RefTable = UsersTable
+	MessagesTable.ForeignKeys[0].RefTable = MessagesTable
+	MessagesTable.ForeignKeys[1].RefTable = UsersTable
 }

@@ -1,7 +1,9 @@
-h1:NWr1APWqfQcA9ORDMO+FmQTM5Srafbixip+QgO/zmUA=
+h1:aM/nBNPp5LXtdWEy1TUx7mDQjcdWI4kFWT7ONz15fkY=
 20231226051048_initial migration.sql h1:UJFenL2/1UjkG/a2luIMF/c6roqkq+CC0kcrsY4WHzQ=
 20240103042806_Adding message ID.sql h1:bQm76M3BfbK9Ccc+JrkTJBG1SOvovmqlwP80z5XSUak=
 20240107195258_is_bot.sql h1:B7tlLSnDhpZczGoXkhO3eqaJwcdocpFhdKyixV/+YBg=
 20240108022343_reated and updated time.sql h1:K4sY18aIPT9yvc6mm19582at+cRXqO1wbWUAB2kPqwI=
 20240109022143_Adding index.sql h1:npjTNT2pgCQ0azpaW/S5PQbNIn8DLP/S0/L66lC7qR4=
 20240109023023_making message ID a string.sql h1:zRbeToP59+i5UDzdHKKV64AWWrA9s8AcoYkomB0E9ok=
+20240110032924_Adding channel ID.sql h1:xVUp9I4/W7cxfSwsH/CjGflwvf4TJelN2YlMPTk39j0=
+20240110035558_Adding in reply to.sql h1:PUKUDilciUnhjrzUZXuhslSohvcLQyHFdpi8p6VJaaE=

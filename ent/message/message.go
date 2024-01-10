@@ -22,12 +22,20 @@ const (
 	FieldSenderID = "sender_id"
 	// FieldMessageID holds the string denoting the message_id field in the database.
 	FieldMessageID = "message_id"
+	// FieldChannelID holds the string denoting the channel_id field in the database.
+	FieldChannelID = "channel_id"
+	// FieldInReplyToID holds the string denoting the in_reply_to_id field in the database.
+	FieldInReplyToID = "in_reply_to_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
 	// EdgeSender holds the string denoting the sender edge name in mutations.
 	EdgeSender = "sender"
+	// EdgeInReplyTo holds the string denoting the in_reply_to edge name in mutations.
+	EdgeInReplyTo = "in_reply_to"
+	// EdgeResponders holds the string denoting the responders edge name in mutations.
+	EdgeResponders = "responders"
 	// Table holds the table name of the message in the database.
 	Table = "messages"
 	// SenderTable is the table that holds the sender relation/edge.
@@ -37,6 +45,14 @@ const (
 	SenderInverseTable = "users"
 	// SenderColumn is the table column denoting the sender relation/edge.
 	SenderColumn = "sender_id"
+	// InReplyToTable is the table that holds the in_reply_to relation/edge.
+	InReplyToTable = "messages"
+	// InReplyToColumn is the table column denoting the in_reply_to relation/edge.
+	InReplyToColumn = "in_reply_to_id"
+	// RespondersTable is the table that holds the responders relation/edge.
+	RespondersTable = "messages"
+	// RespondersColumn is the table column denoting the responders relation/edge.
+	RespondersColumn = "in_reply_to_id"
 )
 
 // Columns holds all SQL columns for message fields.
@@ -46,6 +62,8 @@ var Columns = []string{
 	FieldSentAt,
 	FieldSenderID,
 	FieldMessageID,
+	FieldChannelID,
+	FieldInReplyToID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -97,6 +115,16 @@ func ByMessageID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMessageID, opts...).ToFunc()
 }
 
+// ByChannelID orders the results by the channel_id field.
+func ByChannelID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldChannelID, opts...).ToFunc()
+}
+
+// ByInReplyToID orders the results by the in_reply_to_id field.
+func ByInReplyToID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldInReplyToID, opts...).ToFunc()
+}
+
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
@@ -113,10 +141,45 @@ func BySenderField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newSenderStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByInReplyToField orders the results by in_reply_to field.
+func ByInReplyToField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newInReplyToStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByRespondersCount orders the results by responders count.
+func ByRespondersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRespondersStep(), opts...)
+	}
+}
+
+// ByResponders orders the results by responders terms.
+func ByResponders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRespondersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSenderStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SenderInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, SenderTable, SenderColumn),
+	)
+}
+func newInReplyToStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, InReplyToTable, InReplyToColumn),
+	)
+}
+func newRespondersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RespondersTable, RespondersColumn),
 	)
 }
