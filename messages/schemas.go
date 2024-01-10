@@ -2,7 +2,6 @@ package messages
 
 import (
 	"discord-metrics-server/v2/users"
-	"fmt"
 )
 
 type DiscordMessageID struct {
@@ -17,7 +16,6 @@ type DiscordMessageQuery struct {
 }
 
 func (q DiscordMessageQuery) validate() *string {
-	fmt.Print(q.PageNumber)
 	if q.PageSize > 100 {
 		ret := "Page size cannot be greater than 100"
 		return &ret
