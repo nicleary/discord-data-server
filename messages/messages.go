@@ -87,9 +87,9 @@ func UploadMessage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Invalid in_reply_to message ID",
 			})
+			return
 		}
 	}
-	fmt.Println("Here it is:")
 
 	var messageObject *ent.Message = nil
 
@@ -113,7 +113,7 @@ func UploadMessage(c *gin.Context) {
 	}
 
 	if err != nil {
-		fmt.Println("error creating incomingMessage object!")
+		fmt.Println("error creating message object!")
 		fmt.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid incomingMessage object",

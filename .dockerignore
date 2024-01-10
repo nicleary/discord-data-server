@@ -6,3 +6,6 @@ Dockerfile
 Dockerfile.migrations
 make_migrations.sh
 .dockerignore
+.git
+.github
+lint.sh
