@@ -71,9 +71,97 @@ func (mu *MessageUpdate) SetNillableSenderID(i *int) *MessageUpdate {
 	return mu
 }
 
+// SetMessageID sets the "message_id" field.
+func (mu *MessageUpdate) SetMessageID(s string) *MessageUpdate {
+	mu.mutation.SetMessageID(s)
+	return mu
+}
+
+// SetNillableMessageID sets the "message_id" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableMessageID(s *string) *MessageUpdate {
+	if s != nil {
+		mu.SetMessageID(*s)
+	}
+	return mu
+}
+
+// SetChannelID sets the "channel_id" field.
+func (mu *MessageUpdate) SetChannelID(s string) *MessageUpdate {
+	mu.mutation.SetChannelID(s)
+	return mu
+}
+
+// SetNillableChannelID sets the "channel_id" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableChannelID(s *string) *MessageUpdate {
+	if s != nil {
+		mu.SetChannelID(*s)
+	}
+	return mu
+}
+
+// SetInReplyToID sets the "in_reply_to_id" field.
+func (mu *MessageUpdate) SetInReplyToID(i int) *MessageUpdate {
+	mu.mutation.SetInReplyToID(i)
+	return mu
+}
+
+// SetNillableInReplyToID sets the "in_reply_to_id" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableInReplyToID(i *int) *MessageUpdate {
+	if i != nil {
+		mu.SetInReplyToID(*i)
+	}
+	return mu
+}
+
+// ClearInReplyToID clears the value of the "in_reply_to_id" field.
+func (mu *MessageUpdate) ClearInReplyToID() *MessageUpdate {
+	mu.mutation.ClearInReplyToID()
+	return mu
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (mu *MessageUpdate) SetCreatedAt(t time.Time) *MessageUpdate {
+	mu.mutation.SetCreatedAt(t)
+	return mu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableCreatedAt(t *time.Time) *MessageUpdate {
+	if t != nil {
+		mu.SetCreatedAt(*t)
+	}
+	return mu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (mu *MessageUpdate) SetUpdatedAt(t time.Time) *MessageUpdate {
+	mu.mutation.SetUpdatedAt(t)
+	return mu
+}
+
 // SetSender sets the "sender" edge to the User entity.
 func (mu *MessageUpdate) SetSender(u *User) *MessageUpdate {
 	return mu.SetSenderID(u.ID)
+}
+
+// SetInReplyTo sets the "in_reply_to" edge to the Message entity.
+func (mu *MessageUpdate) SetInReplyTo(m *Message) *MessageUpdate {
+	return mu.SetInReplyToID(m.ID)
+}
+
+// AddResponderIDs adds the "responders" edge to the Message entity by IDs.
+func (mu *MessageUpdate) AddResponderIDs(ids ...int) *MessageUpdate {
+	mu.mutation.AddResponderIDs(ids...)
+	return mu
+}
+
+// AddResponders adds the "responders" edges to the Message entity.
+func (mu *MessageUpdate) AddResponders(m ...*Message) *MessageUpdate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return mu.AddResponderIDs(ids...)
 }
 
 // Mutation returns the MessageMutation object of the builder.
@@ -87,8 +175,36 @@ func (mu *MessageUpdate) ClearSender() *MessageUpdate {
 	return mu
 }
 
+// ClearInReplyTo clears the "in_reply_to" edge to the Message entity.
+func (mu *MessageUpdate) ClearInReplyTo() *MessageUpdate {
+	mu.mutation.ClearInReplyTo()
+	return mu
+}
+
+// ClearResponders clears all "responders" edges to the Message entity.
+func (mu *MessageUpdate) ClearResponders() *MessageUpdate {
+	mu.mutation.ClearResponders()
+	return mu
+}
+
+// RemoveResponderIDs removes the "responders" edge to Message entities by IDs.
+func (mu *MessageUpdate) RemoveResponderIDs(ids ...int) *MessageUpdate {
+	mu.mutation.RemoveResponderIDs(ids...)
+	return mu
+}
+
+// RemoveResponders removes "responders" edges to Message entities.
+func (mu *MessageUpdate) RemoveResponders(m ...*Message) *MessageUpdate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return mu.RemoveResponderIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (mu *MessageUpdate) Save(ctx context.Context) (int, error) {
+	mu.defaults()
 	return withHooks(ctx, mu.sqlSave, mu.mutation, mu.hooks)
 }
 
@@ -111,6 +227,14 @@ func (mu *MessageUpdate) Exec(ctx context.Context) error {
 func (mu *MessageUpdate) ExecX(ctx context.Context) {
 	if err := mu.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (mu *MessageUpdate) defaults() {
+	if _, ok := mu.mutation.UpdatedAt(); !ok {
+		v := message.UpdateDefaultUpdatedAt()
+		mu.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -140,6 +264,18 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := mu.mutation.SentAt(); ok {
 		_spec.SetField(message.FieldSentAt, field.TypeTime, value)
 	}
+	if value, ok := mu.mutation.MessageID(); ok {
+		_spec.SetField(message.FieldMessageID, field.TypeString, value)
+	}
+	if value, ok := mu.mutation.ChannelID(); ok {
+		_spec.SetField(message.FieldChannelID, field.TypeString, value)
+	}
+	if value, ok := mu.mutation.CreatedAt(); ok {
+		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := mu.mutation.UpdatedAt(); ok {
+		_spec.SetField(message.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if mu.mutation.SenderCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -162,6 +298,80 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if mu.mutation.InReplyToCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.InReplyToTable,
+			Columns: []string{message.InReplyToColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.InReplyToIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.InReplyToTable,
+			Columns: []string{message.InReplyToColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if mu.mutation.RespondersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   message.RespondersTable,
+			Columns: []string{message.RespondersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.RemovedRespondersIDs(); len(nodes) > 0 && !mu.mutation.RespondersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   message.RespondersTable,
+			Columns: []string{message.RespondersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.RespondersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   message.RespondersTable,
+			Columns: []string{message.RespondersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -231,9 +441,97 @@ func (muo *MessageUpdateOne) SetNillableSenderID(i *int) *MessageUpdateOne {
 	return muo
 }
 
+// SetMessageID sets the "message_id" field.
+func (muo *MessageUpdateOne) SetMessageID(s string) *MessageUpdateOne {
+	muo.mutation.SetMessageID(s)
+	return muo
+}
+
+// SetNillableMessageID sets the "message_id" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableMessageID(s *string) *MessageUpdateOne {
+	if s != nil {
+		muo.SetMessageID(*s)
+	}
+	return muo
+}
+
+// SetChannelID sets the "channel_id" field.
+func (muo *MessageUpdateOne) SetChannelID(s string) *MessageUpdateOne {
+	muo.mutation.SetChannelID(s)
+	return muo
+}
+
+// SetNillableChannelID sets the "channel_id" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableChannelID(s *string) *MessageUpdateOne {
+	if s != nil {
+		muo.SetChannelID(*s)
+	}
+	return muo
+}
+
+// SetInReplyToID sets the "in_reply_to_id" field.
+func (muo *MessageUpdateOne) SetInReplyToID(i int) *MessageUpdateOne {
+	muo.mutation.SetInReplyToID(i)
+	return muo
+}
+
+// SetNillableInReplyToID sets the "in_reply_to_id" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableInReplyToID(i *int) *MessageUpdateOne {
+	if i != nil {
+		muo.SetInReplyToID(*i)
+	}
+	return muo
+}
+
+// ClearInReplyToID clears the value of the "in_reply_to_id" field.
+func (muo *MessageUpdateOne) ClearInReplyToID() *MessageUpdateOne {
+	muo.mutation.ClearInReplyToID()
+	return muo
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (muo *MessageUpdateOne) SetCreatedAt(t time.Time) *MessageUpdateOne {
+	muo.mutation.SetCreatedAt(t)
+	return muo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableCreatedAt(t *time.Time) *MessageUpdateOne {
+	if t != nil {
+		muo.SetCreatedAt(*t)
+	}
+	return muo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (muo *MessageUpdateOne) SetUpdatedAt(t time.Time) *MessageUpdateOne {
+	muo.mutation.SetUpdatedAt(t)
+	return muo
+}
+
 // SetSender sets the "sender" edge to the User entity.
 func (muo *MessageUpdateOne) SetSender(u *User) *MessageUpdateOne {
 	return muo.SetSenderID(u.ID)
+}
+
+// SetInReplyTo sets the "in_reply_to" edge to the Message entity.
+func (muo *MessageUpdateOne) SetInReplyTo(m *Message) *MessageUpdateOne {
+	return muo.SetInReplyToID(m.ID)
+}
+
+// AddResponderIDs adds the "responders" edge to the Message entity by IDs.
+func (muo *MessageUpdateOne) AddResponderIDs(ids ...int) *MessageUpdateOne {
+	muo.mutation.AddResponderIDs(ids...)
+	return muo
+}
+
+// AddResponders adds the "responders" edges to the Message entity.
+func (muo *MessageUpdateOne) AddResponders(m ...*Message) *MessageUpdateOne {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return muo.AddResponderIDs(ids...)
 }
 
 // Mutation returns the MessageMutation object of the builder.
@@ -245,6 +543,33 @@ func (muo *MessageUpdateOne) Mutation() *MessageMutation {
 func (muo *MessageUpdateOne) ClearSender() *MessageUpdateOne {
 	muo.mutation.ClearSender()
 	return muo
+}
+
+// ClearInReplyTo clears the "in_reply_to" edge to the Message entity.
+func (muo *MessageUpdateOne) ClearInReplyTo() *MessageUpdateOne {
+	muo.mutation.ClearInReplyTo()
+	return muo
+}
+
+// ClearResponders clears all "responders" edges to the Message entity.
+func (muo *MessageUpdateOne) ClearResponders() *MessageUpdateOne {
+	muo.mutation.ClearResponders()
+	return muo
+}
+
+// RemoveResponderIDs removes the "responders" edge to Message entities by IDs.
+func (muo *MessageUpdateOne) RemoveResponderIDs(ids ...int) *MessageUpdateOne {
+	muo.mutation.RemoveResponderIDs(ids...)
+	return muo
+}
+
+// RemoveResponders removes "responders" edges to Message entities.
+func (muo *MessageUpdateOne) RemoveResponders(m ...*Message) *MessageUpdateOne {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return muo.RemoveResponderIDs(ids...)
 }
 
 // Where appends a list predicates to the MessageUpdate builder.
@@ -262,6 +587,7 @@ func (muo *MessageUpdateOne) Select(field string, fields ...string) *MessageUpda
 
 // Save executes the query and returns the updated Message entity.
 func (muo *MessageUpdateOne) Save(ctx context.Context) (*Message, error) {
+	muo.defaults()
 	return withHooks(ctx, muo.sqlSave, muo.mutation, muo.hooks)
 }
 
@@ -284,6 +610,14 @@ func (muo *MessageUpdateOne) Exec(ctx context.Context) error {
 func (muo *MessageUpdateOne) ExecX(ctx context.Context) {
 	if err := muo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (muo *MessageUpdateOne) defaults() {
+	if _, ok := muo.mutation.UpdatedAt(); !ok {
+		v := message.UpdateDefaultUpdatedAt()
+		muo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -330,6 +664,18 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 	if value, ok := muo.mutation.SentAt(); ok {
 		_spec.SetField(message.FieldSentAt, field.TypeTime, value)
 	}
+	if value, ok := muo.mutation.MessageID(); ok {
+		_spec.SetField(message.FieldMessageID, field.TypeString, value)
+	}
+	if value, ok := muo.mutation.ChannelID(); ok {
+		_spec.SetField(message.FieldChannelID, field.TypeString, value)
+	}
+	if value, ok := muo.mutation.CreatedAt(); ok {
+		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := muo.mutation.UpdatedAt(); ok {
+		_spec.SetField(message.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if muo.mutation.SenderCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -352,6 +698,80 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if muo.mutation.InReplyToCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.InReplyToTable,
+			Columns: []string{message.InReplyToColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.InReplyToIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.InReplyToTable,
+			Columns: []string{message.InReplyToColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if muo.mutation.RespondersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   message.RespondersTable,
+			Columns: []string{message.RespondersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.RemovedRespondersIDs(); len(nodes) > 0 && !muo.mutation.RespondersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   message.RespondersTable,
+			Columns: []string{message.RespondersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.RespondersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   message.RespondersTable,
+			Columns: []string{message.RespondersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

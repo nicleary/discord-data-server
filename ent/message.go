@@ -24,6 +24,16 @@ type Message struct {
 	SentAt time.Time `json:"sent_at,omitempty"`
 	// SenderID holds the value of the "sender_id" field.
 	SenderID int `json:"sender_id,omitempty"`
+	// MessageID holds the value of the "message_id" field.
+	MessageID string `json:"message_id,omitempty"`
+	// ChannelID holds the value of the "channel_id" field.
+	ChannelID string `json:"channel_id,omitempty"`
+	// InReplyToID holds the value of the "in_reply_to_id" field.
+	InReplyToID int `json:"in_reply_to_id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MessageQuery when eager-loading is set.
 	Edges        MessageEdges `json:"edges"`
@@ -34,9 +44,13 @@ type Message struct {
 type MessageEdges struct {
 	// Sender holds the value of the sender edge.
 	Sender *User `json:"sender,omitempty"`
+	// InReplyTo holds the value of the in_reply_to edge.
+	InReplyTo *Message `json:"in_reply_to,omitempty"`
+	// Responders holds the value of the responders edge.
+	Responders []*Message `json:"responders,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
 // SenderOrErr returns the Sender value or an error if the edge
@@ -52,16 +66,38 @@ func (e MessageEdges) SenderOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "sender"}
 }
 
+// InReplyToOrErr returns the InReplyTo value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MessageEdges) InReplyToOrErr() (*Message, error) {
+	if e.loadedTypes[1] {
+		if e.InReplyTo == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: message.Label}
+		}
+		return e.InReplyTo, nil
+	}
+	return nil, &NotLoadedError{edge: "in_reply_to"}
+}
+
+// RespondersOrErr returns the Responders value or an error if the edge
+// was not loaded in eager-loading.
+func (e MessageEdges) RespondersOrErr() ([]*Message, error) {
+	if e.loadedTypes[2] {
+		return e.Responders, nil
+	}
+	return nil, &NotLoadedError{edge: "responders"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Message) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case message.FieldID, message.FieldSenderID:
+		case message.FieldID, message.FieldSenderID, message.FieldInReplyToID:
 			values[i] = new(sql.NullInt64)
-		case message.FieldContents:
+		case message.FieldContents, message.FieldMessageID, message.FieldChannelID:
 			values[i] = new(sql.NullString)
-		case message.FieldSentAt:
+		case message.FieldSentAt, message.FieldCreatedAt, message.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -102,6 +138,36 @@ func (m *Message) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				m.SenderID = int(value.Int64)
 			}
+		case message.FieldMessageID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field message_id", values[i])
+			} else if value.Valid {
+				m.MessageID = value.String
+			}
+		case message.FieldChannelID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field channel_id", values[i])
+			} else if value.Valid {
+				m.ChannelID = value.String
+			}
+		case message.FieldInReplyToID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field in_reply_to_id", values[i])
+			} else if value.Valid {
+				m.InReplyToID = int(value.Int64)
+			}
+		case message.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				m.CreatedAt = value.Time
+			}
+		case message.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				m.UpdatedAt = value.Time
+			}
 		default:
 			m.selectValues.Set(columns[i], values[i])
 		}
@@ -118,6 +184,16 @@ func (m *Message) Value(name string) (ent.Value, error) {
 // QuerySender queries the "sender" edge of the Message entity.
 func (m *Message) QuerySender() *UserQuery {
 	return NewMessageClient(m.config).QuerySender(m)
+}
+
+// QueryInReplyTo queries the "in_reply_to" edge of the Message entity.
+func (m *Message) QueryInReplyTo() *MessageQuery {
+	return NewMessageClient(m.config).QueryInReplyTo(m)
+}
+
+// QueryResponders queries the "responders" edge of the Message entity.
+func (m *Message) QueryResponders() *MessageQuery {
+	return NewMessageClient(m.config).QueryResponders(m)
 }
 
 // Update returns a builder for updating this Message.
@@ -151,6 +227,21 @@ func (m *Message) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("sender_id=")
 	builder.WriteString(fmt.Sprintf("%v", m.SenderID))
+	builder.WriteString(", ")
+	builder.WriteString("message_id=")
+	builder.WriteString(m.MessageID)
+	builder.WriteString(", ")
+	builder.WriteString("channel_id=")
+	builder.WriteString(m.ChannelID)
+	builder.WriteString(", ")
+	builder.WriteString("in_reply_to_id=")
+	builder.WriteString(fmt.Sprintf("%v", m.InReplyToID))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }
