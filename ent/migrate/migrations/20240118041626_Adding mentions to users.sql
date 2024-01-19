@@ -1,0 +1,2 @@
+-- Create "message_mentions" table
+CREATE TABLE `message_mentions` (`message_id` bigint NOT NULL, `user_id` bigint NOT NULL, PRIMARY KEY (`message_id`, `user_id`), INDEX `message_mentions_user_id` (`user_id`), CONSTRAINT `message_mentions_message_id` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON UPDATE RESTRICT ON DELETE CASCADE, CONSTRAINT `message_mentions_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE CASCADE) CHARSET utf8mb4 COLLATE utf8mb4_bin;

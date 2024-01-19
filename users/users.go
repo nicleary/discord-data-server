@@ -131,7 +131,7 @@ func UpdateUser(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusCreated, UserToSchema(userObject))
+	c.JSON(http.StatusOK, UserToSchema(userObject))
 }
 
 func DeleteUser(c *gin.Context) {

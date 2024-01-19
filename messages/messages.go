@@ -35,6 +35,7 @@ func GetMessage(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Message ID not found",
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, MessageToSchema(messageObject))
@@ -203,11 +204,70 @@ func GetMessages(c *gin.Context) {
 	c.JSON(http.StatusOK, messageJSONs)
 }
 
+func UpdateMessage(c *gin.Context) {
+	var MessageID DiscordMessageID
+	if err := c.ShouldBindUri(&MessageID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid message ID or message ID not provided",
+		})
+		return
+	}
+
+	var messageBody UpdateDiscordMessage
+	if err := c.ShouldBindJSON(&messageBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Get initial message object
+	client := db.GetClient()
+	messageObject, err := client.Message.
+		Query().
+		Where(message.MessageID(MessageID.MessageID)).
+		WithSender().
+		WithInReplyTo().
+		Only(context.Background())
+
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Message ID not found",
+		})
+		return
+	}
+
+	var contents string = messageObject.Contents
+
+	// Handle updating contents
+	if messageBody.Contents != nil {
+		contents = *messageBody.Contents
+	}
+
+	messageObject, err = messageObject.
+		Update().
+		SetContents(contents).
+		Save(context.Background())
+
+	if err != nil {
+		fmt.Println("Error updating message object")
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid message object",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, MessageToSchema(messageObject))
+}
+
 func Routes(router *gin.Engine) {
 	message := router.Group("api/v1/message")
 	{
 		message.GET("/", GetMessages)
 		message.GET("/:id", GetMessage)
 		message.POST("/", UploadMessage)
+		message.PATCH("/:id", UpdateMessage)
 	}
 }

@@ -90,6 +90,21 @@ func (uc *UserCreate) AddMessages(m ...*Message) *UserCreate {
 	return uc.AddMessageIDs(ids...)
 }
 
+// AddMentionedInIDs adds the "mentioned_in" edge to the Message entity by IDs.
+func (uc *UserCreate) AddMentionedInIDs(ids ...int) *UserCreate {
+	uc.mutation.AddMentionedInIDs(ids...)
+	return uc
+}
+
+// AddMentionedIn adds the "mentioned_in" edges to the Message entity.
+func (uc *UserCreate) AddMentionedIn(m ...*Message) *UserCreate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return uc.AddMentionedInIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uc *UserCreate) Mutation() *UserMutation {
 	return uc.mutation
@@ -208,6 +223,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Inverse: false,
 			Table:   user.MessagesTable,
 			Columns: []string{user.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.MentionedInIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.MentionedInTable,
+			Columns: user.MentionedInPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),

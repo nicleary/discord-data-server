@@ -529,6 +529,29 @@ func HasRespondersWith(preds ...predicate.Message) predicate.Message {
 	})
 }
 
+// HasMentions applies the HasEdge predicate on the "mentions" edge.
+func HasMentions() predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, MentionsTable, MentionsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMentionsWith applies the HasEdge predicate on the "mentions" edge with a given conditions (other predicates).
+func HasMentionsWith(preds ...predicate.User) predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := newMentionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Message) predicate.Message {
 	return predicate.Message(sql.AndPredicates(predicates...))

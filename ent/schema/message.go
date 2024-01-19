@@ -45,6 +45,7 @@ func (Message) Edges() []ent.Edge {
 			From("in_reply_to").
 			Field("in_reply_to_id").
 			Unique(),
+		edge.To("mentions", User.Type),
 	}
 }
 

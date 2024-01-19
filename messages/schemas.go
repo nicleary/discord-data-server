@@ -40,6 +40,10 @@ type DiscordMessage struct {
 	InReplyTo string `json:"in_reply_to"`
 }
 
+type UpdateDiscordMessage struct {
+	Contents *string `json:"contents,omitempty"`
+}
+
 type DiscordMessageResponse struct {
 	ID        int               `json:"id"`
 	User      users.DiscordUser `json:"user"`

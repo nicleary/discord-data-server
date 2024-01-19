@@ -36,6 +36,8 @@ const (
 	EdgeInReplyTo = "in_reply_to"
 	// EdgeResponders holds the string denoting the responders edge name in mutations.
 	EdgeResponders = "responders"
+	// EdgeMentions holds the string denoting the mentions edge name in mutations.
+	EdgeMentions = "mentions"
 	// Table holds the table name of the message in the database.
 	Table = "messages"
 	// SenderTable is the table that holds the sender relation/edge.
@@ -53,6 +55,11 @@ const (
 	RespondersTable = "messages"
 	// RespondersColumn is the table column denoting the responders relation/edge.
 	RespondersColumn = "in_reply_to_id"
+	// MentionsTable is the table that holds the mentions relation/edge. The primary key declared below.
+	MentionsTable = "message_mentions"
+	// MentionsInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	MentionsInverseTable = "users"
 )
 
 // Columns holds all SQL columns for message fields.
@@ -67,6 +74,12 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
+
+var (
+	// MentionsPrimaryKey and MentionsColumn2 are the table columns denoting the
+	// primary key for the mentions relation (M2M).
+	MentionsPrimaryKey = []string{"message_id", "user_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -162,6 +175,20 @@ func ByResponders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newRespondersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByMentionsCount orders the results by mentions count.
+func ByMentionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMentionsStep(), opts...)
+	}
+}
+
+// ByMentions orders the results by mentions terms.
+func ByMentions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMentionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSenderStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -181,5 +208,12 @@ func newRespondersStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(Table, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, RespondersTable, RespondersColumn),
+	)
+}
+func newMentionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MentionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, MentionsTable, MentionsPrimaryKey...),
 	)
 }

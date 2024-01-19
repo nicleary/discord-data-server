@@ -364,6 +364,22 @@ func (c *MessageClient) QueryResponders(m *Message) *MessageQuery {
 	return query
 }
 
+// QueryMentions queries the mentions edge of a Message.
+func (c *MessageClient) QueryMentions(m *Message) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, message.MentionsTable, message.MentionsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *MessageClient) Hooks() []Hook {
 	return c.hooks.Message
@@ -506,6 +522,22 @@ func (c *UserClient) QueryMessages(u *User) *MessageQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(message.Table, message.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.MessagesTable, user.MessagesColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMentionedIn queries the mentioned_in edge of a User.
+func (c *UserClient) QueryMentionedIn(u *User) *MessageQuery {
+	query := (&MessageClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(message.Table, message.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, user.MentionedInTable, user.MentionedInPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil

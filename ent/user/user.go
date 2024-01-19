@@ -26,6 +26,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeMessages holds the string denoting the messages edge name in mutations.
 	EdgeMessages = "messages"
+	// EdgeMentionedIn holds the string denoting the mentioned_in edge name in mutations.
+	EdgeMentionedIn = "mentioned_in"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// MessagesTable is the table that holds the messages relation/edge.
@@ -35,6 +37,11 @@ const (
 	MessagesInverseTable = "messages"
 	// MessagesColumn is the table column denoting the messages relation/edge.
 	MessagesColumn = "sender_id"
+	// MentionedInTable is the table that holds the mentioned_in relation/edge. The primary key declared below.
+	MentionedInTable = "message_mentions"
+	// MentionedInInverseTable is the table name for the Message entity.
+	// It exists in this package in order to avoid circular dependency with the "message" package.
+	MentionedInInverseTable = "messages"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -46,6 +53,12 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
+
+var (
+	// MentionedInPrimaryKey and MentionedInColumn2 are the table columns denoting the
+	// primary key for the mentioned_in relation (M2M).
+	MentionedInPrimaryKey = []string{"message_id", "user_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -114,10 +127,31 @@ func ByMessages(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newMessagesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByMentionedInCount orders the results by mentioned_in count.
+func ByMentionedInCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMentionedInStep(), opts...)
+	}
+}
+
+// ByMentionedIn orders the results by mentioned_in terms.
+func ByMentionedIn(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMentionedInStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newMessagesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(MessagesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, MessagesTable, MessagesColumn),
+	)
+}
+func newMentionedInStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MentionedInInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, MentionedInTable, MentionedInPrimaryKey...),
 	)
 }
