@@ -23,14 +23,20 @@ func GetMentionedUserIDs(messageContents string) []string {
 
 // GetUserMentions Adds mentions of users to database
 func GetUserMentions(messageID string) {
+	fmt.Println("hi there")
 	client := db.GetClient()
 
-	message := client.
+	message, err := client.
 		Message.
 		Query().
 		Where(message.MessageID(messageID)).
 		WithMentions().
-		OnlyX(context.Background())
+		Only(context.Background())
+
+	if err != nil {
+		fmt.Println("Unable to get message by ID", messageID)
+		return
+	}
 
 	// Delete existing mentions, to prevent duplicates
 	for _, userObject := range message.Edges.Mentions {
