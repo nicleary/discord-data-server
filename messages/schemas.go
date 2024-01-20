@@ -44,14 +44,20 @@ type UpdateDiscordMessage struct {
 	Contents *string `json:"contents,omitempty"`
 }
 
+type DiscordMessageUserMention struct {
+	MessageID string `json:"message_id"`
+	UserID    string `json:"user_id"`
+}
+
 type DiscordMessageResponse struct {
-	ID        int               `json:"id"`
-	User      users.DiscordUser `json:"user"`
-	Contents  string            `json:"contents"`
-	SentAt    string            `json:"sent_at"`
-	MessageID string            `json:"message_id"`
-	ChannelID string            `json:"channel_id"`
-	CreatedAt string            `json:"created_at"`
-	UpdatedAt string            `json:"updated_at"`
-	InReplyTo string            `json:"in_reply_to"`
+	ID             int               `json:"id"`
+	User           users.DiscordUser `json:"user"`
+	Contents       string            `json:"contents"`
+	SentAt         string            `json:"sent_at"`
+	MessageID      string            `json:"message_id"`
+	ChannelID      string            `json:"channel_id"`
+	CreatedAt      string            `json:"created_at"`
+	UpdatedAt      string            `json:"updated_at"`
+	InReplyTo      string            `json:"in_reply_to"`
+	UsersMentioned []string          `json:"users_mentioned"`
 }

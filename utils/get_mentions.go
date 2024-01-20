@@ -23,10 +23,9 @@ func GetMentionedUserIDs(messageContents string) []string {
 
 // GetUserMentions Adds mentions of users to database
 func GetUserMentions(messageID string) {
-	fmt.Println("hi there")
 	client := db.GetClient()
 
-	message, err := client.
+	messageObject, err := client.
 		Message.
 		Query().
 		Where(message.MessageID(messageID)).
@@ -39,15 +38,17 @@ func GetUserMentions(messageID string) {
 	}
 
 	// Delete existing mentions, to prevent duplicates
-	for _, userObject := range message.Edges.Mentions {
-		message.Update().RemoveMentions(userObject).SaveX(context.Background())
+	for _, userObject := range messageObject.Edges.Mentions {
+		messageObject.Update().
+			RemoveMentions(userObject).
+			SaveX(context.Background())
 	}
 
 	// Get all mentioned user IDs in the message
-	mentionedIDs := GetMentionedUserIDs(message.Contents)
+	mentionedIDs := GetMentionedUserIDs(messageObject.Contents)
 
 	for _, ID := range mentionedIDs {
-		user, err := client.User.
+		userObject, err := client.User.
 			Query().
 			Where(user.UserID(ID)).
 			Only(context.Background())
@@ -57,7 +58,9 @@ func GetUserMentions(messageID string) {
 			fmt.Println(err.Error())
 		}
 
-		_, err = user.Update().AddMentionedIn(message).Save(context.Background())
+		_, err = userObject.Update().
+			AddMentionedIn(messageObject).
+			Save(context.Background())
 		if err != nil {
 			fmt.Println("Error saving user message link")
 		}
