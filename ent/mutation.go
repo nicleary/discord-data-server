@@ -49,6 +49,9 @@ type MessageMutation struct {
 	responders         map[int]struct{}
 	removedresponders  map[int]struct{}
 	clearedresponders  bool
+	mentions           map[int]struct{}
+	removedmentions    map[int]struct{}
+	clearedmentions    bool
 	done               bool
 	oldValue           func(context.Context) (*Message, error)
 	predicates         []predicate.Message
@@ -561,6 +564,60 @@ func (m *MessageMutation) ResetResponders() {
 	m.removedresponders = nil
 }
 
+// AddMentionIDs adds the "mentions" edge to the User entity by ids.
+func (m *MessageMutation) AddMentionIDs(ids ...int) {
+	if m.mentions == nil {
+		m.mentions = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.mentions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMentions clears the "mentions" edge to the User entity.
+func (m *MessageMutation) ClearMentions() {
+	m.clearedmentions = true
+}
+
+// MentionsCleared reports if the "mentions" edge to the User entity was cleared.
+func (m *MessageMutation) MentionsCleared() bool {
+	return m.clearedmentions
+}
+
+// RemoveMentionIDs removes the "mentions" edge to the User entity by IDs.
+func (m *MessageMutation) RemoveMentionIDs(ids ...int) {
+	if m.removedmentions == nil {
+		m.removedmentions = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.mentions, ids[i])
+		m.removedmentions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMentions returns the removed IDs of the "mentions" edge to the User entity.
+func (m *MessageMutation) RemovedMentionsIDs() (ids []int) {
+	for id := range m.removedmentions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MentionsIDs returns the "mentions" edge IDs in the mutation.
+func (m *MessageMutation) MentionsIDs() (ids []int) {
+	for id := range m.mentions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMentions resets all changes to the "mentions" edge.
+func (m *MessageMutation) ResetMentions() {
+	m.mentions = nil
+	m.clearedmentions = false
+	m.removedmentions = nil
+}
+
 // Where appends a list predicates to the MessageMutation builder.
 func (m *MessageMutation) Where(ps ...predicate.Message) {
 	m.predicates = append(m.predicates, ps...)
@@ -825,7 +882,7 @@ func (m *MessageMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *MessageMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.sender != nil {
 		edges = append(edges, message.EdgeSender)
 	}
@@ -834,6 +891,9 @@ func (m *MessageMutation) AddedEdges() []string {
 	}
 	if m.responders != nil {
 		edges = append(edges, message.EdgeResponders)
+	}
+	if m.mentions != nil {
+		edges = append(edges, message.EdgeMentions)
 	}
 	return edges
 }
@@ -856,15 +916,24 @@ func (m *MessageMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case message.EdgeMentions:
+		ids := make([]ent.Value, 0, len(m.mentions))
+		for id := range m.mentions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *MessageMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedresponders != nil {
 		edges = append(edges, message.EdgeResponders)
+	}
+	if m.removedmentions != nil {
+		edges = append(edges, message.EdgeMentions)
 	}
 	return edges
 }
@@ -879,13 +948,19 @@ func (m *MessageMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case message.EdgeMentions:
+		ids := make([]ent.Value, 0, len(m.removedmentions))
+		for id := range m.removedmentions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *MessageMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedsender {
 		edges = append(edges, message.EdgeSender)
 	}
@@ -894,6 +969,9 @@ func (m *MessageMutation) ClearedEdges() []string {
 	}
 	if m.clearedresponders {
 		edges = append(edges, message.EdgeResponders)
+	}
+	if m.clearedmentions {
+		edges = append(edges, message.EdgeMentions)
 	}
 	return edges
 }
@@ -908,6 +986,8 @@ func (m *MessageMutation) EdgeCleared(name string) bool {
 		return m.clearedin_reply_to
 	case message.EdgeResponders:
 		return m.clearedresponders
+	case message.EdgeMentions:
+		return m.clearedmentions
 	}
 	return false
 }
@@ -939,6 +1019,9 @@ func (m *MessageMutation) ResetEdge(name string) error {
 	case message.EdgeResponders:
 		m.ResetResponders()
 		return nil
+	case message.EdgeMentions:
+		m.ResetMentions()
+		return nil
 	}
 	return fmt.Errorf("unknown Message edge %s", name)
 }
@@ -946,21 +1029,24 @@ func (m *MessageMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *int
-	user_id         *string
-	date_joined     *time.Time
-	is_bot          *bool
-	created_at      *time.Time
-	updated_at      *time.Time
-	clearedFields   map[string]struct{}
-	messages        map[int]struct{}
-	removedmessages map[int]struct{}
-	clearedmessages bool
-	done            bool
-	oldValue        func(context.Context) (*User, error)
-	predicates      []predicate.User
+	op                  Op
+	typ                 string
+	id                  *int
+	user_id             *string
+	date_joined         *time.Time
+	is_bot              *bool
+	created_at          *time.Time
+	updated_at          *time.Time
+	clearedFields       map[string]struct{}
+	messages            map[int]struct{}
+	removedmessages     map[int]struct{}
+	clearedmessages     bool
+	mentioned_in        map[int]struct{}
+	removedmentioned_in map[int]struct{}
+	clearedmentioned_in bool
+	done                bool
+	oldValue            func(context.Context) (*User, error)
+	predicates          []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -1295,6 +1381,60 @@ func (m *UserMutation) ResetMessages() {
 	m.removedmessages = nil
 }
 
+// AddMentionedInIDs adds the "mentioned_in" edge to the Message entity by ids.
+func (m *UserMutation) AddMentionedInIDs(ids ...int) {
+	if m.mentioned_in == nil {
+		m.mentioned_in = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.mentioned_in[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMentionedIn clears the "mentioned_in" edge to the Message entity.
+func (m *UserMutation) ClearMentionedIn() {
+	m.clearedmentioned_in = true
+}
+
+// MentionedInCleared reports if the "mentioned_in" edge to the Message entity was cleared.
+func (m *UserMutation) MentionedInCleared() bool {
+	return m.clearedmentioned_in
+}
+
+// RemoveMentionedInIDs removes the "mentioned_in" edge to the Message entity by IDs.
+func (m *UserMutation) RemoveMentionedInIDs(ids ...int) {
+	if m.removedmentioned_in == nil {
+		m.removedmentioned_in = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.mentioned_in, ids[i])
+		m.removedmentioned_in[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMentionedIn returns the removed IDs of the "mentioned_in" edge to the Message entity.
+func (m *UserMutation) RemovedMentionedInIDs() (ids []int) {
+	for id := range m.removedmentioned_in {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MentionedInIDs returns the "mentioned_in" edge IDs in the mutation.
+func (m *UserMutation) MentionedInIDs() (ids []int) {
+	for id := range m.mentioned_in {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMentionedIn resets all changes to the "mentioned_in" edge.
+func (m *UserMutation) ResetMentionedIn() {
+	m.mentioned_in = nil
+	m.clearedmentioned_in = false
+	m.removedmentioned_in = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -1496,9 +1636,12 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.messages != nil {
 		edges = append(edges, user.EdgeMessages)
+	}
+	if m.mentioned_in != nil {
+		edges = append(edges, user.EdgeMentionedIn)
 	}
 	return edges
 }
@@ -1513,15 +1656,24 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeMentionedIn:
+		ids := make([]ent.Value, 0, len(m.mentioned_in))
+		for id := range m.mentioned_in {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedmessages != nil {
 		edges = append(edges, user.EdgeMessages)
+	}
+	if m.removedmentioned_in != nil {
+		edges = append(edges, user.EdgeMentionedIn)
 	}
 	return edges
 }
@@ -1536,15 +1688,24 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeMentionedIn:
+		ids := make([]ent.Value, 0, len(m.removedmentioned_in))
+		for id := range m.removedmentioned_in {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedmessages {
 		edges = append(edges, user.EdgeMessages)
+	}
+	if m.clearedmentioned_in {
+		edges = append(edges, user.EdgeMentionedIn)
 	}
 	return edges
 }
@@ -1555,6 +1716,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 	switch name {
 	case user.EdgeMessages:
 		return m.clearedmessages
+	case user.EdgeMentionedIn:
+		return m.clearedmentioned_in
 	}
 	return false
 }
@@ -1573,6 +1736,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 	switch name {
 	case user.EdgeMessages:
 		m.ResetMessages()
+		return nil
+	case user.EdgeMentionedIn:
+		m.ResetMentionedIn()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

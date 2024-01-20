@@ -37,9 +37,11 @@ type User struct {
 type UserEdges struct {
 	// Messages holds the value of the messages edge.
 	Messages []*Message `json:"messages,omitempty"`
+	// MentionedIn holds the value of the mentioned_in edge.
+	MentionedIn []*Message `json:"mentioned_in,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // MessagesOrErr returns the Messages value or an error if the edge
@@ -49,6 +51,15 @@ func (e UserEdges) MessagesOrErr() ([]*Message, error) {
 		return e.Messages, nil
 	}
 	return nil, &NotLoadedError{edge: "messages"}
+}
+
+// MentionedInOrErr returns the MentionedIn value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) MentionedInOrErr() ([]*Message, error) {
+	if e.loadedTypes[1] {
+		return e.MentionedIn, nil
+	}
+	return nil, &NotLoadedError{edge: "mentioned_in"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -131,6 +142,11 @@ func (u *User) Value(name string) (ent.Value, error) {
 // QueryMessages queries the "messages" edge of the User entity.
 func (u *User) QueryMessages() *MessageQuery {
 	return NewUserClient(u.config).QueryMessages(u)
+}
+
+// QueryMentionedIn queries the "mentioned_in" edge of the User entity.
+func (u *User) QueryMentionedIn() *MessageQuery {
+	return NewUserClient(u.config).QueryMentionedIn(u)
 }
 
 // Update returns a builder for updating this User.

@@ -164,6 +164,21 @@ func (mu *MessageUpdate) AddResponders(m ...*Message) *MessageUpdate {
 	return mu.AddResponderIDs(ids...)
 }
 
+// AddMentionIDs adds the "mentions" edge to the User entity by IDs.
+func (mu *MessageUpdate) AddMentionIDs(ids ...int) *MessageUpdate {
+	mu.mutation.AddMentionIDs(ids...)
+	return mu
+}
+
+// AddMentions adds the "mentions" edges to the User entity.
+func (mu *MessageUpdate) AddMentions(u ...*User) *MessageUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return mu.AddMentionIDs(ids...)
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (mu *MessageUpdate) Mutation() *MessageMutation {
 	return mu.mutation
@@ -200,6 +215,27 @@ func (mu *MessageUpdate) RemoveResponders(m ...*Message) *MessageUpdate {
 		ids[i] = m[i].ID
 	}
 	return mu.RemoveResponderIDs(ids...)
+}
+
+// ClearMentions clears all "mentions" edges to the User entity.
+func (mu *MessageUpdate) ClearMentions() *MessageUpdate {
+	mu.mutation.ClearMentions()
+	return mu
+}
+
+// RemoveMentionIDs removes the "mentions" edge to User entities by IDs.
+func (mu *MessageUpdate) RemoveMentionIDs(ids ...int) *MessageUpdate {
+	mu.mutation.RemoveMentionIDs(ids...)
+	return mu
+}
+
+// RemoveMentions removes "mentions" edges to User entities.
+func (mu *MessageUpdate) RemoveMentions(u ...*User) *MessageUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return mu.RemoveMentionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -379,6 +415,51 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if mu.mutation.MentionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   message.MentionsTable,
+			Columns: message.MentionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.RemovedMentionsIDs(); len(nodes) > 0 && !mu.mutation.MentionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   message.MentionsTable,
+			Columns: message.MentionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.MentionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   message.MentionsTable,
+			Columns: message.MentionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, mu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{message.Label}
@@ -534,6 +615,21 @@ func (muo *MessageUpdateOne) AddResponders(m ...*Message) *MessageUpdateOne {
 	return muo.AddResponderIDs(ids...)
 }
 
+// AddMentionIDs adds the "mentions" edge to the User entity by IDs.
+func (muo *MessageUpdateOne) AddMentionIDs(ids ...int) *MessageUpdateOne {
+	muo.mutation.AddMentionIDs(ids...)
+	return muo
+}
+
+// AddMentions adds the "mentions" edges to the User entity.
+func (muo *MessageUpdateOne) AddMentions(u ...*User) *MessageUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return muo.AddMentionIDs(ids...)
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (muo *MessageUpdateOne) Mutation() *MessageMutation {
 	return muo.mutation
@@ -570,6 +666,27 @@ func (muo *MessageUpdateOne) RemoveResponders(m ...*Message) *MessageUpdateOne {
 		ids[i] = m[i].ID
 	}
 	return muo.RemoveResponderIDs(ids...)
+}
+
+// ClearMentions clears all "mentions" edges to the User entity.
+func (muo *MessageUpdateOne) ClearMentions() *MessageUpdateOne {
+	muo.mutation.ClearMentions()
+	return muo
+}
+
+// RemoveMentionIDs removes the "mentions" edge to User entities by IDs.
+func (muo *MessageUpdateOne) RemoveMentionIDs(ids ...int) *MessageUpdateOne {
+	muo.mutation.RemoveMentionIDs(ids...)
+	return muo
+}
+
+// RemoveMentions removes "mentions" edges to User entities.
+func (muo *MessageUpdateOne) RemoveMentions(u ...*User) *MessageUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return muo.RemoveMentionIDs(ids...)
 }
 
 // Where appends a list predicates to the MessageUpdate builder.
@@ -772,6 +889,51 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if muo.mutation.MentionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   message.MentionsTable,
+			Columns: message.MentionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.RemovedMentionsIDs(); len(nodes) > 0 && !muo.mutation.MentionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   message.MentionsTable,
+			Columns: message.MentionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.MentionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   message.MentionsTable,
+			Columns: message.MentionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -84,14 +84,42 @@ var (
 			},
 		},
 	}
+	// MessageMentionsColumns holds the columns for the "message_mentions" table.
+	MessageMentionsColumns = []*schema.Column{
+		{Name: "message_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// MessageMentionsTable holds the schema information for the "message_mentions" table.
+	MessageMentionsTable = &schema.Table{
+		Name:       "message_mentions",
+		Columns:    MessageMentionsColumns,
+		PrimaryKey: []*schema.Column{MessageMentionsColumns[0], MessageMentionsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "message_mentions_message_id",
+				Columns:    []*schema.Column{MessageMentionsColumns[0]},
+				RefColumns: []*schema.Column{MessagesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "message_mentions_user_id",
+				Columns:    []*schema.Column{MessageMentionsColumns[1]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		MessagesTable,
 		UsersTable,
+		MessageMentionsTable,
 	}
 )
 
 func init() {
 	MessagesTable.ForeignKeys[0].RefTable = MessagesTable
 	MessagesTable.ForeignKeys[1].RefTable = UsersTable
+	MessageMentionsTable.ForeignKeys[0].RefTable = MessagesTable
+	MessageMentionsTable.ForeignKeys[1].RefTable = UsersTable
 }

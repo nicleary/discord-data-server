@@ -48,9 +48,11 @@ type MessageEdges struct {
 	InReplyTo *Message `json:"in_reply_to,omitempty"`
 	// Responders holds the value of the responders edge.
 	Responders []*Message `json:"responders,omitempty"`
+	// Mentions holds the value of the mentions edge.
+	Mentions []*User `json:"mentions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // SenderOrErr returns the Sender value or an error if the edge
@@ -86,6 +88,15 @@ func (e MessageEdges) RespondersOrErr() ([]*Message, error) {
 		return e.Responders, nil
 	}
 	return nil, &NotLoadedError{edge: "responders"}
+}
+
+// MentionsOrErr returns the Mentions value or an error if the edge
+// was not loaded in eager-loading.
+func (e MessageEdges) MentionsOrErr() ([]*User, error) {
+	if e.loadedTypes[3] {
+		return e.Mentions, nil
+	}
+	return nil, &NotLoadedError{edge: "mentions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -194,6 +205,11 @@ func (m *Message) QueryInReplyTo() *MessageQuery {
 // QueryResponders queries the "responders" edge of the Message entity.
 func (m *Message) QueryResponders() *MessageQuery {
 	return NewMessageClient(m.config).QueryResponders(m)
+}
+
+// QueryMentions queries the "mentions" edge of the Message entity.
+func (m *Message) QueryMentions() *UserQuery {
+	return NewMessageClient(m.config).QueryMentions(m)
 }
 
 // Update returns a builder for updating this Message.

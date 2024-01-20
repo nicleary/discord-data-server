@@ -106,6 +106,21 @@ func (uu *UserUpdate) AddMessages(m ...*Message) *UserUpdate {
 	return uu.AddMessageIDs(ids...)
 }
 
+// AddMentionedInIDs adds the "mentioned_in" edge to the Message entity by IDs.
+func (uu *UserUpdate) AddMentionedInIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddMentionedInIDs(ids...)
+	return uu
+}
+
+// AddMentionedIn adds the "mentioned_in" edges to the Message entity.
+func (uu *UserUpdate) AddMentionedIn(m ...*Message) *UserUpdate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return uu.AddMentionedInIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -130,6 +145,27 @@ func (uu *UserUpdate) RemoveMessages(m ...*Message) *UserUpdate {
 		ids[i] = m[i].ID
 	}
 	return uu.RemoveMessageIDs(ids...)
+}
+
+// ClearMentionedIn clears all "mentioned_in" edges to the Message entity.
+func (uu *UserUpdate) ClearMentionedIn() *UserUpdate {
+	uu.mutation.ClearMentionedIn()
+	return uu
+}
+
+// RemoveMentionedInIDs removes the "mentioned_in" edge to Message entities by IDs.
+func (uu *UserUpdate) RemoveMentionedInIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveMentionedInIDs(ids...)
+	return uu
+}
+
+// RemoveMentionedIn removes "mentioned_in" edges to Message entities.
+func (uu *UserUpdate) RemoveMentionedIn(m ...*Message) *UserUpdate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return uu.RemoveMentionedInIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -237,6 +273,51 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.MentionedInCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.MentionedInTable,
+			Columns: user.MentionedInPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedMentionedInIDs(); len(nodes) > 0 && !uu.mutation.MentionedInCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.MentionedInTable,
+			Columns: user.MentionedInPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.MentionedInIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.MentionedInTable,
+			Columns: user.MentionedInPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -334,6 +415,21 @@ func (uuo *UserUpdateOne) AddMessages(m ...*Message) *UserUpdateOne {
 	return uuo.AddMessageIDs(ids...)
 }
 
+// AddMentionedInIDs adds the "mentioned_in" edge to the Message entity by IDs.
+func (uuo *UserUpdateOne) AddMentionedInIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddMentionedInIDs(ids...)
+	return uuo
+}
+
+// AddMentionedIn adds the "mentioned_in" edges to the Message entity.
+func (uuo *UserUpdateOne) AddMentionedIn(m ...*Message) *UserUpdateOne {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return uuo.AddMentionedInIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -358,6 +454,27 @@ func (uuo *UserUpdateOne) RemoveMessages(m ...*Message) *UserUpdateOne {
 		ids[i] = m[i].ID
 	}
 	return uuo.RemoveMessageIDs(ids...)
+}
+
+// ClearMentionedIn clears all "mentioned_in" edges to the Message entity.
+func (uuo *UserUpdateOne) ClearMentionedIn() *UserUpdateOne {
+	uuo.mutation.ClearMentionedIn()
+	return uuo
+}
+
+// RemoveMentionedInIDs removes the "mentioned_in" edge to Message entities by IDs.
+func (uuo *UserUpdateOne) RemoveMentionedInIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveMentionedInIDs(ids...)
+	return uuo
+}
+
+// RemoveMentionedIn removes "mentioned_in" edges to Message entities.
+func (uuo *UserUpdateOne) RemoveMentionedIn(m ...*Message) *UserUpdateOne {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return uuo.RemoveMentionedInIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -485,6 +602,51 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Inverse: false,
 			Table:   user.MessagesTable,
 			Columns: []string{user.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.MentionedInCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.MentionedInTable,
+			Columns: user.MentionedInPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedMentionedInIDs(); len(nodes) > 0 && !uuo.mutation.MentionedInCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.MentionedInTable,
+			Columns: user.MentionedInPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.MentionedInIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.MentionedInTable,
+			Columns: user.MentionedInPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),

@@ -26,6 +26,7 @@ type MessageQuery struct {
 	withSender     *UserQuery
 	withInReplyTo  *MessageQuery
 	withResponders *MessageQuery
+	withMentions   *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -121,6 +122,28 @@ func (mq *MessageQuery) QueryResponders() *MessageQuery {
 			sqlgraph.From(message.Table, message.FieldID, selector),
 			sqlgraph.To(message.Table, message.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, message.RespondersTable, message.RespondersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryMentions chains the current query on the "mentions" edge.
+func (mq *MessageQuery) QueryMentions() *UserQuery {
+	query := (&UserClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, message.MentionsTable, message.MentionsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
 		return fromU, nil
@@ -323,6 +346,7 @@ func (mq *MessageQuery) Clone() *MessageQuery {
 		withSender:     mq.withSender.Clone(),
 		withInReplyTo:  mq.withInReplyTo.Clone(),
 		withResponders: mq.withResponders.Clone(),
+		withMentions:   mq.withMentions.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
@@ -359,6 +383,17 @@ func (mq *MessageQuery) WithResponders(opts ...func(*MessageQuery)) *MessageQuer
 		opt(query)
 	}
 	mq.withResponders = query
+	return mq
+}
+
+// WithMentions tells the query-builder to eager-load the nodes that are connected to
+// the "mentions" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MessageQuery) WithMentions(opts ...func(*UserQuery)) *MessageQuery {
+	query := (&UserClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withMentions = query
 	return mq
 }
 
@@ -440,10 +475,11 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	var (
 		nodes       = []*Message{}
 		_spec       = mq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			mq.withSender != nil,
 			mq.withInReplyTo != nil,
 			mq.withResponders != nil,
+			mq.withMentions != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -480,6 +516,13 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 		if err := mq.loadResponders(ctx, query, nodes,
 			func(n *Message) { n.Edges.Responders = []*Message{} },
 			func(n *Message, e *Message) { n.Edges.Responders = append(n.Edges.Responders, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := mq.withMentions; query != nil {
+		if err := mq.loadMentions(ctx, query, nodes,
+			func(n *Message) { n.Edges.Mentions = []*User{} },
+			func(n *Message, e *User) { n.Edges.Mentions = append(n.Edges.Mentions, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -571,6 +614,67 @@ func (mq *MessageQuery) loadResponders(ctx context.Context, query *MessageQuery,
 			return fmt.Errorf(`unexpected referenced foreign-key "in_reply_to_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (mq *MessageQuery) loadMentions(ctx context.Context, query *UserQuery, nodes []*Message, init func(*Message), assign func(*Message, *User)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Message)
+	nids := make(map[int]map[*Message]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(message.MentionsTable)
+		s.Join(joinT).On(s.C(user.FieldID), joinT.C(message.MentionsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(message.MentionsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(message.MentionsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Message]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*User](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "mentions" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
 	}
 	return nil
 }
